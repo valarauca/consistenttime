@@ -1,6 +1,6 @@
 [package]
 name = "consistenttime"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["William Cody Laeder <codylaeder@gmail.com>"]
 repository = "https://github.com/valarauca/consistenttime.git"
 homepage = "https://github.com/valarauca/consistenttime"
