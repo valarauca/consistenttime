@@ -15,7 +15,7 @@ To use this crate include:
 
 ```
 [dependencies]
-constanttime = "0.0.1"
+constanttime = "0.1.0"
 ```
 
 ####Legal
