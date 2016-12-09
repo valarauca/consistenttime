@@ -1,6 +1,6 @@
 #constanttime
 
-[Documentation](https://valarauca.github.io/consistenttime/consistenttime.index.html)
+[Documentation](https://valarauca.github.io/consistenttime/consistenttime/index.html)
 
 A crate that supports _many_ constant time operations. The reference is [Go-Lang's crypto/subtile](https://golang.org/src/crypto/subtle/constant_time.go)
 which implements the orginal form of these constant time operations. I took the library of extrapolating the `uint8` and `uint32` into _all_ Rust
