@@ -47,8 +47,11 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-9' class='srclink' href='../src/consistenttime/src/lib.rs.html#37-43' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn ct_u8_eq(x: u8, y: u8) -&gt; usize</pre><div class='docblock'><p>Returns 1usize if x==y, otherwise returns 0usize</p>
+               </span><a id='src-10' class='srclink' href='../src/consistenttime/src/lib.rs.html#121-139' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn ct_u8_eq(x: u8, y: u8) -&gt; bool</pre><div class='docblock'><p>Tests if two values are equal in constant time.</p>
+
+<p>XORs, Shift Rights, AND are all that are used. There is
+no branching.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

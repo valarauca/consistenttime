@@ -47,10 +47,11 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-57' class='srclink' href='../src/consistenttime/src/lib.rs.html#99-110' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn ct_usize_slice_eq(x: &amp;[usize], y: &amp;[usize]) -&gt; usize</pre><div class='docblock'><p>Compares two slices.
-Returns 1usize if x==y, and 0usize if x!=y. Will always
-return 0 if lens are not equal</p>
+               </span><a id='src-63' class='srclink' href='../src/consistenttime/src/lib.rs.html#187-198' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn ct_usize_slice_eq(x: &amp;[usize], y: &amp;[usize]) -&gt; bool</pre><div class='docblock'><p>Check the equality of slices.</p>
+
+<p>This will transverse the entire slice reguardless of if a
+conflict is found early. </p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

@@ -16,7 +16,7 @@
 //!Consistent Time
 //!
 //!The goal of this crate is to offer constant time functions which most
-//!cryptographic computing protocols require to prevent side channelling 
+//!cryptographic computing protocols require to prevent side channeling 
 //!timing attacks. 
 //!
 //!These algorithms are not implemented to be efficient. But to take the
@@ -29,15 +29,81 @@
 //!supported by Rust-Lang. Everything inside of this crate is defined
 //!as a macro. This makes writing the extremely repetive code for all
 //!types a lot easier.
+//!
+//!There is internal unsafe code to handle converting `bool` to `u8`
+//!and vice versa. The machine instructions generated for these
+//!operations involve no branches or comparison operators,
+//!see the notes in the source code.
 
 
 #![no_std]
+use core::mem::transmute as trans;
 
 const MAX_U8: u8 = ::core::u8::MAX;
 const MAX_U16: u16 = ::core::u16::MAX;
 const MAX_U32: u32 = ::core::u32::MAX;
 const MAX_U64: u64 = ::core::u64::MAX;
 const MAX_USIZE: usize = ::core::usize::MAX;
+
+
+
+/*
+ * Rust booleans are effectively u8's with typing sugar.
+ * True = 0x01
+ * False = 0x00
+ *
+ * One can recover the true/false value via unsafe function
+ *
+ * fn to_val<X>(b: bool) -> X {
+ *      let val: u8 = unsafe{ ::core::mem::transmute(b) };
+ *      val as X
+ * }
+ *
+ * For the type u64 (and using the sugar [#inline(never)]
+ * this will compile down to:
+ *
+ *    mov rax dil
+ *    ret
+ *
+ * One can likely from that example determine how _other_
+ * integer formats are dervived.
+ *
+ * The test below asserts this behavior.
+ *
+ * :.:.:
+ *
+ * When converting from ~some~ uint to a bool the reverse
+ * is sligtly true. Consider the equality operation
+ *
+ *    let mut z: u16 = MAX ^ (x^y);
+ *    z >> 8;
+ *    z >> 4;
+ *    z >> 2;
+ *    z >> 1;
+ *    let val = z as u8;
+ *    unsafe{ ::core::mem::transmute(val) }; //returns bool
+ *
+ * The ASM generated for the last two operations
+ *
+ *    let val = z as u8;
+ *    unsafe{ ::core::mem::transmute(val)};
+ *
+ * It is simply
+ *
+ *    andl $1, %eax
+ *    retq
+ *
+ * The typing is gone at compile time.
+ */
+#[test]
+fn test_bool_representation() {
+    let t: bool = true;
+    let f: bool = false;
+    let t_val: u8 = unsafe{ ::core::mem::transmute(t) };
+    let f_val: u8 = unsafe{ ::core::mem::transmute(f) };
+    assert_eq!( t_val, 0x01u8);
+    assert_eq!( f_val, 0x00u8);
+}
 
 /*
  * The purpose of the below macro is two fold. 
@@ -48,36 +114,51 @@ const MAX_USIZE: usize = ::core::usize::MAX;
 macro_rules! ct_eq_gen {
     ($name: ident, $code: ty, $max: expr, $($shr: expr),*
         ;; $test_name: ident, $test_v0: expr, $test_v1: expr) => {
-        ///Returns 1usize if x==y, otherwise returns 0usize
-        pub fn $name( x: $code, y: $code) -> usize {
+        ///Tests if two values are equal in constant time.
+        ///
+        ///XORs, Shift Rights, AND are all that are used. There is
+        ///no branching.
+        pub fn $name( x: $code, y: $code) -> bool {
             let mut z: $code = $max ^ (x^y);
             $(
                 z &= z.wrapping_shr($shr);
             )*
-            z as usize
+            /* 
+             * Convert to a boolean
+             * This is 99% syntax sugar
+             * z will get moved eax about 5 instructions before this
+             * The only operation done here is
+             *
+             *    andl $1, %eax
+             *
+             *  Which just asserts the structure of a boolean
+             *  remain 0x01 or 0x00.
+             */
+            let val = z as u8;
+            unsafe{trans(val)}
         }
         #[test]
         fn $test_name() {
             let x: $code = $test_v0;
             let y: $code = $test_v1;
-            assert_eq!( $name($max,$max), 1);
-            assert_eq!( $name(x,x), 1);
-            assert_eq!( $name(y,y), 1);
-            assert_eq!( $name(0,0), 1);
-            assert_eq!( $name(1,1), 1);
-            assert_eq!( $name($max,0), 0);
-            assert_eq!( $name($max,1), 0);
-            assert_eq!( $name($max,x), 0);
-            assert_eq!( $name($max,y), 0);
-            assert_eq!( $name(y,1), 0);
-            assert_eq!( $name(x,1), 0);
-            assert_eq!( $name(y,0), 0);
-            assert_eq!( $name(x,0), 0);
-            assert_eq!( $name(x,y), 0);
+            assert_eq!( $name($max,$max), true);
+            assert_eq!( $name(x,x), true);
+            assert_eq!( $name(y,y), true);
+            assert_eq!( $name(0,0), true);
+            assert_eq!( $name(1,1), true);
+            assert_eq!( $name($max,0), false);
+            assert_eq!( $name($max,1), false);
+            assert_eq!( $name($max,x), false);
+            assert_eq!( $name($max,y), false);
+            assert_eq!( $name(y,1), false);
+            assert_eq!( $name(x,1), false);
+            assert_eq!( $name(y,0), false);
+            assert_eq!( $name(x,0), false);
+            assert_eq!( $name(x,y), false);
             $(
-                assert_eq!( $name($shr,$shr), 1);
-                assert_eq!( $name($shr,0), 0);
-                assert_eq!( $name($shr,$max), 0);
+                assert_eq!( $name($shr,$shr), true);
+                assert_eq!( $name($shr,0), false);
+                assert_eq!( $name($shr,$max), false);
             )*
         }
     }
@@ -97,25 +178,17 @@ ct_eq_gen!(ct_usize_eq,usize,MAX_USIZE,16,8,4,2,1;;
 ct_eq_gen!(ct_usize_eq,usize,MAX_USIZE,32,16,8,4,2,1;;
     test_ct_usize_eq, 859632175648921456, 5);
 
-
-/*
- * The purpose of the below macro is the same as the above.
- *
- *  1. Produce a function to perform the comparison between
- *      two slices which will take place in constant time
- *  2. Define a test to validate the behavior of the above
- *      defined function
- */
 macro_rules! ct_eq_slice_gen {
     ($name:ident,$eq:ident,$code: ty;;$test_name:ident,$max: expr) => {
-        ///Compares two slices.
-        ///Returns 1usize if x==y, and 0usize if x!=y. Will always
-        ///return 0 if lens are not equal
-        pub fn $name( x: &[$code], y: &[$code]) -> usize {
+        ///Check the equality of slices.
+        ///
+        ///This will transverse the entire slice reguardless of if a
+        ///conflict is found early. 
+        pub fn $name( x: &[$code], y: &[$code]) -> bool {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
-               return 0;
+               return false;
             }
             let mut flag: $code = 0;
             for i in 0..x_len {
@@ -128,12 +201,12 @@ macro_rules! ct_eq_slice_gen {
             let x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
             let y: [$code;10] = [$max,$max,$max,$max,$max,$max,$max,$max,$max,$max];
             let z: [$code;10] = [1,1,1,1,1,1,1,1,1,1];
-            assert_eq!( $name( &x, &x), 1);
-            assert_eq!( $name( &y, &y), 1);
-            assert_eq!( $name( &z, &z), 1);
-            assert_eq!( $name( &x, &y), 0);
-            assert_eq!( $name( &x, &y), 0);
-            assert_eq!( $name( &y, &z), 0);
+            assert_eq!( $name( &x, &x), true);
+            assert_eq!( $name( &y, &y), true);
+            assert_eq!( $name( &z, &z), true);
+            assert_eq!( $name( &x, &y), false);
+            assert_eq!( $name( &x, &y), false);
+            assert_eq!( $name( &y, &z), false);
         }
     }
 }
@@ -151,30 +224,33 @@ ct_eq_slice_gen!(ct_usize_slice_eq,ct_usize_eq,usize;;
 
 macro_rules! ct_select_gen {
     ($name:ident,$max:expr,$code:ty;;$test_name:ident,$v0:expr,$v1:expr) => {
-        ///Constant Time Selection.
+        ///Optional value selection.
         ///
-        ///Returns X if flag == 1.
+        ///Allow to set a varible optionally at the same speed without
+        ///branching, or changing speed.
         ///
-        ///Returns Y if flag == 0.
+        ///Returns X if flag == True.
         ///
-        ///Behavior is undefined for all other values.
-        pub fn $name(flag: $code, x: $code, y: $code) -> $code {
+        ///Returns Y if flag == False.
+        pub fn $name(flag: bool, x: $code, y: $code) -> $code {
+            let val: u8 = unsafe{ trans(flag) };
+            let flag = val as $code;
             (($max ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
         }
         #[test]
         fn $test_name() {
-            assert_eq!( $name(1,$v0,$v1), $v0);
-            assert_eq!( $name(0,$v0,$v1), $v1);
-            assert_eq!( $name(1,$v1,$v0), $v1);
-            assert_eq!( $name(0,$v1,$v0), $v0);
-            assert_eq!( $name(1,$v0,$max), $v0);
-            assert_eq!( $name(0,$v0,$max), $max);
-            assert_eq!( $name(1,$max,$v0), $max);
-            assert_eq!( $name(0,$max,$v0), $v0);
-            assert_eq!( $name(1,$max,$v1), $max);
-            assert_eq!( $name(0,$max,$v1), $v1);
-            assert_eq!( $name(1,$v1,$max), $v1);
-            assert_eq!( $name(0,$v1,$max), $max);
+            assert_eq!( $name(true,$v0,$v1), $v0);
+            assert_eq!( $name(false,$v0,$v1), $v1);
+            assert_eq!( $name(true,$v1,$v0), $v1);
+            assert_eq!( $name(false,$v1,$v0), $v0);
+            assert_eq!( $name(true,$v0,$max), $v0);
+            assert_eq!( $name(false,$v0,$max), $max);
+            assert_eq!( $name(true,$max,$v0), $max);
+            assert_eq!( $name(false,$max,$v0), $v0);
+            assert_eq!( $name(true,$max,$v1), $max);
+            assert_eq!( $name(false,$max,$v1), $v1);
+            assert_eq!( $name(true,$v1,$max), $v1);
+            assert_eq!( $name(false,$v1,$max), $max);
         }
     }
 }
@@ -192,25 +268,26 @@ ct_select_gen!(ct_select_usize,MAX_USIZE,usize;;
 
 macro_rules! ct_constant_copy_gen {
     ($name:ident,$max:expr,$code:ty;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
-        ///Constant Time Copy
+        ///Constant time optional buffer copying
         ///
         ///Copies the value of Y into X (provides slices are equal length)
-        ///IF flag == 1 
+        ///IF flag == True
         ///
-        ///If flag == 0 X is left unchanged.
-        ///
-        ///The behavior of this function is undefined if flag has a value
-        ///not 1 or 0.
+        ///If flag == False X is left unchanged.
         ///
         ///#Panic:
         ///
         ///This function will panic if X and Y are not equal length. 
-        pub fn $name(flag: $code, x: &mut [$code], y: &[$code]) {
+        pub fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
                 panic!("Consistent Time: Attempted to copy between non-equal lens");
             }
+            //constant time boolean to unsigned int conversion
+            //see note above
+            let val: u8 = unsafe{trans(flag)};
+            let flag = val as $code;
             let x_mask: $code = flag.wrapping_sub(1);
             let y_mask: $code = $max ^ flag.wrapping_sub(1);
             for i in 0..x_len {
@@ -222,11 +299,11 @@ macro_rules! ct_constant_copy_gen {
             let base: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
             let mut x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
             let y: [$code;10] = [$max,$max,$max,$max,$max,$max,$max,$max,$max,$max];
-            $name(0,&mut x, &y);
-            assert_eq!( $sl_eq(&x,&base), 1);
-            $name(1,&mut x, &y);
-            assert_eq!( $sl_eq(&x,&base), 0);
-            assert_eq!( $sl_eq(&x,&y), 1);
+            $name(false,&mut x, &y);
+            assert_eq!( $sl_eq(&x,&base), true);
+            $name(true,&mut x, &y);
+            assert_eq!( $sl_eq(&x,&base), false);
+            assert_eq!( $sl_eq(&x,&y), true);
         }
         #[test]
         #[should_panic]
@@ -236,7 +313,7 @@ macro_rules! ct_constant_copy_gen {
             //trigger panic
             //even on false evaluation
             //value of flag is irrelevant
-            $name(0,&mut x,&base);
+            $name(false,&mut x,&base);
         }
     }
 }

@@ -47,11 +47,11 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/consistenttime/src/lib.rs.html#1-237' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/consistenttime/src/lib.rs.html#16-329' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Consistent Time</p>
 
 <p>The goal of this crate is to offer constant time functions which most
-cryptographic computing protocols require to prevent side channel 
+cryptographic computing protocols require to prevent side channeling 
 timing attacks. </p>
 
 <p>These algorithms are not implemented to be efficient. But to take the
@@ -64,156 +64,151 @@ Which implements a handful of constant time algorithms.</p>
 supported by Rust-Lang. Everything inside of this crate is defined
 as a macro. This makes writing the extremely repetive code for all
 types a lot easier.</p>
+
+<p>There is internal unsafe code to handle converting <code>bool</code> to <code>u8</code>
+and vice versa. The machine instructions generated for these
+operations involve no branches or comparison operators,
+see the notes in the source code.</p>
 </div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u16.html'
                                   title='consistenttime::ct_copy_u16'>ct_copy_u16</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Copy</p>
+                                <p>Constant time optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u32.html'
                                   title='consistenttime::ct_copy_u32'>ct_copy_u32</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Copy</p>
+                                <p>Constant time optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u64.html'
                                   title='consistenttime::ct_copy_u64'>ct_copy_u64</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Copy</p>
+                                <p>Constant time optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u8.html'
                                   title='consistenttime::ct_copy_u8'>ct_copy_u8</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Copy</p>
+                                <p>Constant time optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_usize.html'
                                   title='consistenttime::ct_copy_usize'>ct_copy_usize</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Copy</p>
+                                <p>Constant time optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u16.html'
                                   title='consistenttime::ct_select_u16'>ct_select_u16</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Selection.</p>
+                                <p>Optional value selection.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u32.html'
                                   title='consistenttime::ct_select_u32'>ct_select_u32</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Selection.</p>
+                                <p>Optional value selection.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u64.html'
                                   title='consistenttime::ct_select_u64'>ct_select_u64</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Selection.</p>
+                                <p>Optional value selection.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u8.html'
                                   title='consistenttime::ct_select_u8'>ct_select_u8</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Selection.</p>
+                                <p>Optional value selection.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_usize.html'
                                   title='consistenttime::ct_select_usize'>ct_select_usize</a></td>
                            <td class='docblock-short'>
-                                <p>Constant Time Selection.</p>
+                                <p>Optional value selection.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u16_eq.html'
                                   title='consistenttime::ct_u16_eq'>ct_u16_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Returns 1usize if x==y, otherwise returns 0usize</p>
+                                <p>Tests if two values are equal in constant time.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u16_slice_eq.html'
                                   title='consistenttime::ct_u16_slice_eq'>ct_u16_slice_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Compares two slices.
-Returns 1usize if x==y, and 0usize if x!=y. Will always
-return 0 if lens are not equal</p>
+                                <p>Check the equality of slices.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u32_eq.html'
                                   title='consistenttime::ct_u32_eq'>ct_u32_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Returns 1usize if x==y, otherwise returns 0usize</p>
+                                <p>Tests if two values are equal in constant time.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u32_slice_eq.html'
                                   title='consistenttime::ct_u32_slice_eq'>ct_u32_slice_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Compares two slices.
-Returns 1usize if x==y, and 0usize if x!=y. Will always
-return 0 if lens are not equal</p>
+                                <p>Check the equality of slices.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u64_eq.html'
                                   title='consistenttime::ct_u64_eq'>ct_u64_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Returns 1usize if x==y, otherwise returns 0usize</p>
+                                <p>Tests if two values are equal in constant time.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u64_slice_eq.html'
                                   title='consistenttime::ct_u64_slice_eq'>ct_u64_slice_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Compares two slices.
-Returns 1usize if x==y, and 0usize if x!=y. Will always
-return 0 if lens are not equal</p>
+                                <p>Check the equality of slices.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u8_eq.html'
                                   title='consistenttime::ct_u8_eq'>ct_u8_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Returns 1usize if x==y, otherwise returns 0usize</p>
+                                <p>Tests if two values are equal in constant time.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_u8_slice_eq.html'
                                   title='consistenttime::ct_u8_slice_eq'>ct_u8_slice_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Compares two slices.
-Returns 1usize if x==y, and 0usize if x!=y. Will always
-return 0 if lens are not equal</p>
+                                <p>Check the equality of slices.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_usize_eq.html'
                                   title='consistenttime::ct_usize_eq'>ct_usize_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Returns 1usize if x==y, otherwise returns 0usize</p>
+                                <p>Tests if two values are equal in constant time.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_usize_slice_eq.html'
                                   title='consistenttime::ct_usize_slice_eq'>ct_usize_slice_eq</a></td>
                            <td class='docblock-short'>
-                                <p>Compares two slices.
-Returns 1usize if x==y, and 0usize if x!=y. Will always
-return 0 if lens are not equal</p>
+                                <p>Check the equality of slices.</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>

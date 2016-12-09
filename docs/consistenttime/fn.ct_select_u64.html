@@ -47,14 +47,15 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-76' class='srclink' href='../src/consistenttime/src/lib.rs.html#146-148' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn ct_select_u64(flag: u64, x: u64, y: u64) -&gt; u64</pre><div class='docblock'><p>Constant Time Selection.</p>
+               </span><a id='src-88' class='srclink' href='../src/consistenttime/src/lib.rs.html#235-239' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn ct_select_u64(flag: bool, x: u64, y: u64) -&gt; u64</pre><div class='docblock'><p>Optional value selection.</p>
 
-<p>Returns X if flag == 1.</p>
+<p>Allow to set a varible optionally at the same speed without
+branching, or changing speed.</p>
 
-<p>Returns Y if flag == 0.</p>
+<p>Returns X if flag == True.</p>
 
-<p>Behavior is undefined for all other values.</p>
+<p>Returns Y if flag == False.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

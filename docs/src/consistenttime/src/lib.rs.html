@@ -279,11 +279,118 @@
 <span id="235">235</span>
 <span id="236">236</span>
 <span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
 </pre><pre class='rust '>
+<span class='comment'>//Copyright 2016 William Cody Laeder</span>
+<span class='comment'>//</span>
+<span class='comment'>//Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class='comment'>//you may not use this file except in compliance with the License.</span>
+<span class='comment'>//you may obtain a copy of the License at</span>
+<span class='comment'>//</span>
+<span class='comment'>//  http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class='comment'>//</span>
+<span class='comment'>//Unless required by applicable law or agreed to in writing, software</span>
+<span class='comment'>//distrubuted under the License is distrubuted on as &quot;AS IS&quot; BASIS,</span>
+<span class='comment'>//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class='comment'>//See the License for the specific language governing permissions and</span>
+<span class='comment'>//limitations under the License.</span>
+
+
 <span class='doccomment'>//!Consistent Time</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!The goal of this crate is to offer constant time functions which most</span>
-<span class='doccomment'>//!cryptographic computing protocols require to prevent side channelling </span>
+<span class='doccomment'>//!cryptographic computing protocols require to prevent side channeling </span>
 <span class='doccomment'>//!timing attacks. </span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!These algorithms are not implemented to be efficient. But to take the</span>
@@ -296,15 +403,81 @@
 <span class='doccomment'>//!supported by Rust-Lang. Everything inside of this crate is defined</span>
 <span class='doccomment'>//!as a macro. This makes writing the extremely repetive code for all</span>
 <span class='doccomment'>//!types a lot easier.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//!There is internal unsafe code to handle converting `bool` to `u8`</span>
+<span class='doccomment'>//!and vice versa. The machine instructions generated for these</span>
+<span class='doccomment'>//!operations involve no branches or comparison operators,</span>
+<span class='doccomment'>//!see the notes in the source code.</span>
 
 
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>no_std</span>]</span>
+<span class='kw'>use</span> <span class='ident'>core</span>::<span class='ident'>mem</span>::<span class='ident'>transmute</span> <span class='kw'>as</span> <span class='ident'>trans</span>;
 
 <span class='kw'>const</span> <span class='ident'>MAX_U8</span>: <span class='ident'>u8</span> <span class='op'>=</span> ::<span class='ident'>core</span>::<span class='ident'>u8</span>::<span class='ident'>MAX</span>;
 <span class='kw'>const</span> <span class='ident'>MAX_U16</span>: <span class='ident'>u16</span> <span class='op'>=</span> ::<span class='ident'>core</span>::<span class='ident'>u16</span>::<span class='ident'>MAX</span>;
 <span class='kw'>const</span> <span class='ident'>MAX_U32</span>: <span class='ident'>u32</span> <span class='op'>=</span> ::<span class='ident'>core</span>::<span class='ident'>u32</span>::<span class='ident'>MAX</span>;
 <span class='kw'>const</span> <span class='ident'>MAX_U64</span>: <span class='ident'>u64</span> <span class='op'>=</span> ::<span class='ident'>core</span>::<span class='ident'>u64</span>::<span class='ident'>MAX</span>;
 <span class='kw'>const</span> <span class='ident'>MAX_USIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> ::<span class='ident'>core</span>::<span class='ident'>usize</span>::<span class='ident'>MAX</span>;
+
+
+
+<span class='comment'>/*
+ * Rust booleans are effectively u8&#39;s with typing sugar.
+ * True = 0x01
+ * False = 0x00
+ *
+ * One can recover the true/false value via unsafe function
+ *
+ * fn to_val&lt;X&gt;(b: bool) -&gt; X {
+ *      let val: u8 = unsafe{ ::core::mem::transmute(b) };
+ *      val as X
+ * }
+ *
+ * For the type u64 (and using the sugar [#inline(never)]
+ * this will compile down to:
+ *
+ *    mov rax dil
+ *    ret
+ *
+ * One can likely from that example determine how _other_
+ * integer formats are dervived.
+ *
+ * The test below asserts this behavior.
+ *
+ * :.:.:
+ *
+ * When converting from ~some~ uint to a bool the reverse
+ * is sligtly true. Consider the equality operation
+ *
+ *    let mut z: u16 = MAX ^ (x^y);
+ *    z &gt;&gt; 8;
+ *    z &gt;&gt; 4;
+ *    z &gt;&gt; 2;
+ *    z &gt;&gt; 1;
+ *    let val = z as u8;
+ *    unsafe{ ::core::mem::transmute(val) }; //returns bool
+ *
+ * The ASM generated for the last two operations
+ *
+ *    let val = z as u8;
+ *    unsafe{ ::core::mem::transmute(val)};
+ *
+ * It is simply
+ *
+ *    andl $1, %eax
+ *    retq
+ *
+ * The typing is gone at compile time.
+ */</span>
+<span class='attribute'>#[<span class='ident'>test</span>]</span>
+<span class='kw'>fn</span> <span class='ident'>test_bool_representation</span>() {
+    <span class='kw'>let</span> <span class='ident'>t</span>: <span class='ident'>bool</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
+    <span class='kw'>let</span> <span class='ident'>f</span>: <span class='ident'>bool</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
+    <span class='kw'>let</span> <span class='ident'>t_val</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='kw'>unsafe</span>{ ::<span class='ident'>core</span>::<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>t</span>) };
+    <span class='kw'>let</span> <span class='ident'>f_val</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='kw'>unsafe</span>{ ::<span class='ident'>core</span>::<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>f</span>) };
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='ident'>t_val</span>, <span class='number'>0x01u8</span>);
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='ident'>f_val</span>, <span class='number'>0x00u8</span>);
+}
 
 <span class='comment'>/*
  * The purpose of the below macro is two fold. 
@@ -315,36 +488,51 @@
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>ct_eq_gen</span> {
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>: <span class='ident'>ty</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>: <span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>: <span class='ident'>expr</span>),<span class='op'>*</span>
         ;; <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_name</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_v0</span>: <span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_v1</span>: <span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
-        <span class='doccomment'>///Returns 1usize if x==y, otherwise returns 0usize</span>
-        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='ident'>x</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>, <span class='ident'>y</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='doccomment'>///Tests if two values are equal in constant time.</span>
+        <span class='doccomment'>///</span>
+        <span class='doccomment'>///XORs, Shift Rights, AND are all that are used. There is</span>
+        <span class='doccomment'>///no branching.</span>
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='ident'>x</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>, <span class='ident'>y</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>z</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span> <span class='op'>^</span> (<span class='ident'>x</span><span class='op'>^</span><span class='ident'>y</span>);
             $(
                 <span class='ident'>z</span> <span class='op'>&amp;=</span> <span class='ident'>z</span>.<span class='ident'>wrapping_shr</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>);
             )<span class='op'>*</span>
-            <span class='ident'>z</span> <span class='kw'>as</span> <span class='ident'>usize</span>
+            <span class='comment'>/* 
+             * Convert to a boolean
+             * This is 99% syntax sugar
+             * z will get moved eax about 5 instructions before this
+             * The only operation done here is
+             *
+             *    andl $1, %eax
+             *
+             *  Which just asserts the structure of a boolean
+             *  remain 0x01 or 0x00.
+             */</span>
+            <span class='kw'>let</span> <span class='ident'>val</span> <span class='op'>=</span> <span class='ident'>z</span> <span class='kw'>as</span> <span class='ident'>u8</span>;
+            <span class='kw'>unsafe</span>{<span class='ident'>trans</span>(<span class='ident'>val</span>)}
         }
         <span class='attribute'>#[<span class='ident'>test</span>]</span>
         <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_name</span>() {
             <span class='kw'>let</span> <span class='ident'>x</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_v0</span>;
             <span class='kw'>let</span> <span class='ident'>y</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_v1</span>;
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='ident'>x</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>y</span>,<span class='ident'>y</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='number'>0</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='number'>1</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='number'>0</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='number'>1</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='ident'>x</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='ident'>y</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>y</span>,<span class='number'>1</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='number'>1</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>y</span>,<span class='number'>0</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='number'>0</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='ident'>y</span>), <span class='number'>0</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='ident'>x</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>y</span>,<span class='ident'>y</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='number'>0</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='number'>1</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='number'>0</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='number'>1</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='ident'>x</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='ident'>y</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>y</span>,<span class='number'>1</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='number'>1</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>y</span>,<span class='number'>0</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='number'>0</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>x</span>,<span class='ident'>y</span>), <span class='bool-val'>false</span>);
             $(
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>), <span class='number'>1</span>);
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>,<span class='number'>0</span>), <span class='number'>0</span>);
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='number'>0</span>);
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>), <span class='bool-val'>true</span>);
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>,<span class='number'>0</span>), <span class='bool-val'>false</span>);
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>shr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='bool-val'>false</span>);
             )<span class='op'>*</span>
         }
     }
@@ -364,25 +552,17 @@
 <span class='macro'>ct_eq_gen</span><span class='macro'>!</span>(<span class='ident'>ct_usize_eq</span>,<span class='ident'>usize</span>,<span class='ident'>MAX_USIZE</span>,<span class='number'>32</span>,<span class='number'>16</span>,<span class='number'>8</span>,<span class='number'>4</span>,<span class='number'>2</span>,<span class='number'>1</span>;;
     <span class='ident'>test_ct_usize_eq</span>, <span class='number'>859632175648921456</span>, <span class='number'>5</span>);
 
-
-<span class='comment'>/*
- * The purpose of the below macro is the same as the above.
- *
- *  1. Produce a function to perform the comparison between
- *      two slices which will take place in constant time
- *  2. Define a test to validate the behavior of the above
- *      defined function
- */</span>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>ct_eq_slice_gen</span> {
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>eq</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>: <span class='ident'>ty</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_name</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>: <span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
-        <span class='doccomment'>///Compares two slices.</span>
-        <span class='doccomment'>///Returns 1usize if x==y, and 0usize if x!=y. Will always</span>
-        <span class='doccomment'>///return 0 if lens are not equal</span>
-        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='ident'>x</span>: <span class='kw-2'>&amp;</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>], <span class='ident'>y</span>: <span class='kw-2'>&amp;</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>]) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='doccomment'>///Check the equality of slices.</span>
+        <span class='doccomment'>///</span>
+        <span class='doccomment'>///This will transverse the entire slice reguardless of if a</span>
+        <span class='doccomment'>///conflict is found early. </span>
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='ident'>x</span>: <span class='kw-2'>&amp;</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>], <span class='ident'>y</span>: <span class='kw-2'>&amp;</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>]) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
             <span class='kw'>let</span> <span class='ident'>x_len</span> <span class='op'>=</span> <span class='ident'>x</span>.<span class='ident'>len</span>();
             <span class='kw'>let</span> <span class='ident'>y_len</span> <span class='op'>=</span> <span class='ident'>y</span>.<span class='ident'>len</span>();
             <span class='kw'>if</span> <span class='ident'>x_len</span> <span class='op'>!=</span> <span class='ident'>y_len</span> {
-               <span class='kw'>return</span> <span class='number'>0</span>;
+               <span class='kw'>return</span> <span class='bool-val'>false</span>;
             }
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>flag</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> <span class='op'>=</span> <span class='number'>0</span>;
             <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>x_len</span> {
@@ -395,12 +575,12 @@
             <span class='kw'>let</span> <span class='ident'>x</span>: [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;<span class='number'>10</span>] <span class='op'>=</span> [<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>];
             <span class='kw'>let</span> <span class='ident'>y</span>: [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;<span class='number'>10</span>] <span class='op'>=</span> [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>];
             <span class='kw'>let</span> <span class='ident'>z</span>: [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;<span class='number'>10</span>] <span class='op'>=</span> [<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>,<span class='number'>1</span>];
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>x</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>y</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>z</span>, <span class='kw-2'>&amp;</span><span class='ident'>z</span>), <span class='number'>1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>y</span>, <span class='kw-2'>&amp;</span><span class='ident'>z</span>), <span class='number'>0</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>x</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>y</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>z</span>, <span class='kw-2'>&amp;</span><span class='ident'>z</span>), <span class='bool-val'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>( <span class='kw-2'>&amp;</span><span class='ident'>y</span>, <span class='kw-2'>&amp;</span><span class='ident'>z</span>), <span class='bool-val'>false</span>);
         }
     }
 }
@@ -418,30 +598,33 @@
 
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>ct_select_gen</span> {
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>:<span class='ident'>expr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>:<span class='ident'>ty</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_name</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>:<span class='ident'>expr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
-        <span class='doccomment'>///Constant Time Selection.</span>
+        <span class='doccomment'>///Optional value selection.</span>
         <span class='doccomment'>///</span>
-        <span class='doccomment'>///Returns X if flag == 1.</span>
+        <span class='doccomment'>///Allow to set a varible optionally at the same speed without</span>
+        <span class='doccomment'>///branching, or changing speed.</span>
         <span class='doccomment'>///</span>
-        <span class='doccomment'>///Returns Y if flag == 0.</span>
+        <span class='doccomment'>///Returns X if flag == True.</span>
         <span class='doccomment'>///</span>
-        <span class='doccomment'>///Behavior is undefined for all other values.</span>
-        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>flag</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>, <span class='ident'>x</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>, <span class='ident'>y</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>) <span class='op'>-&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> {
+        <span class='doccomment'>///Returns Y if flag == False.</span>
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>flag</span>: <span class='ident'>bool</span>, <span class='ident'>x</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>, <span class='ident'>y</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>) <span class='op'>-&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> {
+            <span class='kw'>let</span> <span class='ident'>val</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='kw'>unsafe</span>{ <span class='ident'>trans</span>(<span class='ident'>flag</span>) };
+            <span class='kw'>let</span> <span class='ident'>flag</span> <span class='op'>=</span> <span class='ident'>val</span> <span class='kw'>as</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;
             ((<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span> <span class='op'>^</span> <span class='ident'>flag</span>.<span class='ident'>wrapping_sub</span>(<span class='number'>1</span>))<span class='kw-2'>&amp;</span><span class='ident'>x</span>)<span class='op'>|</span>(<span class='ident'>flag</span>.<span class='ident'>wrapping_sub</span>(<span class='number'>1</span>)<span class='kw-2'>&amp;</span><span class='ident'>y</span>)
         }
         <span class='attribute'>#[<span class='ident'>test</span>]</span>
         <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_name</span>() {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v0</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>v1</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>);
         }
     }
 }
@@ -459,25 +642,26 @@
 
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>ct_constant_copy_gen</span> {
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>:<span class='ident'>expr</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>:<span class='ident'>ty</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>test_name</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>:<span class='ident'>ident</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>other_test</span>:<span class='ident'>ident</span>) <span class='op'>=&gt;</span> {
-        <span class='doccomment'>///Constant Time Copy</span>
+        <span class='doccomment'>///Constant time optional buffer copying</span>
         <span class='doccomment'>///</span>
         <span class='doccomment'>///Copies the value of Y into X (provides slices are equal length)</span>
-        <span class='doccomment'>///IF flag == 1 </span>
+        <span class='doccomment'>///IF flag == True</span>
         <span class='doccomment'>///</span>
-        <span class='doccomment'>///If flag == 0 X is left unchanged.</span>
-        <span class='doccomment'>///</span>
-        <span class='doccomment'>///The behavior of this function is undefined if flag has a value</span>
-        <span class='doccomment'>///not 1 or 0.</span>
+        <span class='doccomment'>///If flag == False X is left unchanged.</span>
         <span class='doccomment'>///</span>
         <span class='doccomment'>///#Panic:</span>
         <span class='doccomment'>///</span>
         <span class='doccomment'>///This function will panic if X and Y are not equal length. </span>
-        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>flag</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>, <span class='ident'>x</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>], <span class='ident'>y</span>: <span class='kw-2'>&amp;</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>]) {
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='ident'>flag</span>: <span class='ident'>bool</span>, <span class='ident'>x</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>], <span class='ident'>y</span>: <span class='kw-2'>&amp;</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>]) {
             <span class='kw'>let</span> <span class='ident'>x_len</span> <span class='op'>=</span> <span class='ident'>x</span>.<span class='ident'>len</span>();
             <span class='kw'>let</span> <span class='ident'>y_len</span> <span class='op'>=</span> <span class='ident'>y</span>.<span class='ident'>len</span>();
             <span class='kw'>if</span> <span class='ident'>x_len</span> <span class='op'>!=</span> <span class='ident'>y_len</span> {
                 <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Consistent Time: Attempted to copy between non-equal lens&quot;</span>);
             }
+            <span class='comment'>//constant time boolean to unsigned int conversion</span>
+            <span class='comment'>//see note above</span>
+            <span class='kw'>let</span> <span class='ident'>val</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='kw'>unsafe</span>{<span class='ident'>trans</span>(<span class='ident'>flag</span>)};
+            <span class='kw'>let</span> <span class='ident'>flag</span> <span class='op'>=</span> <span class='ident'>val</span> <span class='kw'>as</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;
             <span class='kw'>let</span> <span class='ident'>x_mask</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> <span class='op'>=</span> <span class='ident'>flag</span>.<span class='ident'>wrapping_sub</span>(<span class='number'>1</span>);
             <span class='kw'>let</span> <span class='ident'>y_mask</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span> <span class='op'>^</span> <span class='ident'>flag</span>.<span class='ident'>wrapping_sub</span>(<span class='number'>1</span>);
             <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>x_len</span> {
@@ -489,11 +673,11 @@
             <span class='kw'>let</span> <span class='ident'>base</span>: [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;<span class='number'>10</span>] <span class='op'>=</span> [<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>];
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>x</span>: [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;<span class='number'>10</span>] <span class='op'>=</span> [<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>,<span class='number'>0</span>];
             <span class='kw'>let</span> <span class='ident'>y</span>: [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>code</span>;<span class='number'>10</span>] <span class='op'>=</span> [<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>,<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>max</span>];
-            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>base</span>), <span class='number'>1</span>);
-            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>1</span>,<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>base</span>), <span class='number'>0</span>);
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='number'>1</span>);
+            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>base</span>), <span class='bool-val'>true</span>);
+            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>true</span>,<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>x</span>, <span class='kw-2'>&amp;</span><span class='ident'>y</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>base</span>), <span class='bool-val'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sl_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>y</span>), <span class='bool-val'>true</span>);
         }
         <span class='attribute'>#[<span class='ident'>test</span>]</span>
         <span class='attribute'>#[<span class='ident'>should_panic</span>]</span>
@@ -503,7 +687,7 @@
             <span class='comment'>//trigger panic</span>
             <span class='comment'>//even on false evaluation</span>
             <span class='comment'>//value of flag is irrelevant</span>
-            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='number'>0</span>,<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>base</span>);
+            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>(<span class='bool-val'>false</span>,<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>x</span>,<span class='kw-2'>&amp;</span><span class='ident'>base</span>);
         }
     }
 }
