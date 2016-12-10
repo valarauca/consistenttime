@@ -236,6 +236,7 @@ macro_rules! ct_select_gen {
         ///
         ///Returns Y if flag == False.
         #[no_mangle]
+        #[inline(never)]
         pub extern "C" fn $name(flag: bool, x: $code, y: $code) -> $code {
             let val: u8 = unsafe{trans(flag)};
             let flag = val as $code;
@@ -271,7 +272,8 @@ ct_select_gen!(ct_select_usize,MAX_USIZE,usize;;
     test_ct_select_usize,155,4);
 
 macro_rules! ct_constant_copy_gen {
-    ($name:ident,$max:expr,$code:ty;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
+    ($name:ident,$max:expr,$code:ty,$copy_symbol: ident
+    ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
         ///Constant time optional buffer copying
         ///
         ///Copies the value of Y into X (provides slices are equal length)
@@ -289,14 +291,10 @@ macro_rules! ct_constant_copy_gen {
             if x_len != y_len {
                 panic!("Consistent Time: Attempted to copy between non-equal lens");
             }
-            //constant time boolean to unsigned int conversion
-            //see note above
-            let val: u8 = unsafe{trans(flag)};
-            let flag = val as $code;
-            let x_mask: $code = flag.wrapping_sub(1);
-            let y_mask: $code = $max ^ flag.wrapping_sub(1);
             for i in 0..x_len {
-                x[i] = (x[i]&x_mask)|(y[i]&y_mask)
+                let y_temp = y[i].clone();
+                let x_temp = x[i].clone();
+                x[i] = $copy_symbol(flag,y_temp,x_temp); 
             }
         }
         #[test]
@@ -322,13 +320,13 @@ macro_rules! ct_constant_copy_gen {
         }
     }
 }
-ct_constant_copy_gen!(ct_copy_u8,MAX_U8,u8;;
+ct_constant_copy_gen!(ct_copy_u8,MAX_U8,u8,ct_select_u8;;
     test_ct_copy_u8,ct_u8_slice_eq,test_ct_copy_u8_panic);
-ct_constant_copy_gen!(ct_copy_u16,MAX_U16,u16;;
+ct_constant_copy_gen!(ct_copy_u16,MAX_U16,u16,ct_select_u16;;
     test_ct_copy_u16,ct_u16_slice_eq,test_ct_copy_u16_panic);
-ct_constant_copy_gen!(ct_copy_u32,MAX_U32,u32;;
+ct_constant_copy_gen!(ct_copy_u32,MAX_U32,u32,ct_select_u32;;
     test_ct_copy_u32,ct_u32_slice_eq,test_ct_copy_u32_panic);
-ct_constant_copy_gen!(ct_copy_u64,MAX_U64,u64;;
+ct_constant_copy_gen!(ct_copy_u64,MAX_U64,u64,ct_select_u64;;
     test_ct_copy_u64,ct_u64_slice_eq,test_ct_copy_u64_panic);
-ct_constant_copy_gen!(ct_copy_usize,MAX_USIZE,usize;;
+ct_constant_copy_gen!(ct_copy_usize,MAX_USIZE,usize,ct_select_usize;;
     test_ct_copy_usize,ct_usize_slice_eq,test_ct_copy_usize_panic);
