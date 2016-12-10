@@ -118,7 +118,8 @@ macro_rules! ct_eq_gen {
         ///
         ///XORs, Shift Rights, AND are all that are used. There is
         ///no branching.
-        pub fn $name( x: $code, y: $code) -> bool {
+        #[no_mangle]
+        pub extern "C" fn $name( x: $code, y: $code) -> bool {
             let mut z: $code = $max ^ (x^y);
             $(
                 z &= z.wrapping_shr($shr);
@@ -184,7 +185,8 @@ macro_rules! ct_eq_slice_gen {
         ///
         ///This will transverse the entire slice reguardless of if a
         ///conflict is found early. 
-        pub fn $name( x: &[$code], y: &[$code]) -> bool {
+        #[no_mangle]
+        pub extern "C" fn $name( x: &[$code], y: &[$code]) -> bool {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
@@ -232,8 +234,9 @@ macro_rules! ct_select_gen {
         ///Returns X if flag == True.
         ///
         ///Returns Y if flag == False.
-        pub fn $name(flag: bool, x: $code, y: $code) -> $code {
-            let val: u8 = unsafe{ trans(flag) };
+        #[no_mangle]
+        pub extern "C" fn $name(flag: bool, x: $code, y: $code) -> $code {
+            let val: u8 = unsafe{trans(flag)};
             let flag = val as $code;
             (($max ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
         }
@@ -278,7 +281,8 @@ macro_rules! ct_constant_copy_gen {
         ///#Panic:
         ///
         ///This function will panic if X and Y are not equal length. 
-        pub fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
+        #[no_mangle]
+        pub extern "C" fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
