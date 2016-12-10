@@ -119,6 +119,7 @@ macro_rules! ct_eq_gen {
         ///XORs, Shift Rights, AND are all that are used. There is
         ///no branching.
         #[no_mangle]
+        #[inline(never)]
         pub extern "C" fn $name( x: $code, y: $code) -> bool {
             let mut z: $code = $max ^ (x^y);
             $(
