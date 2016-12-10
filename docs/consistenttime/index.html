@@ -47,15 +47,15 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/consistenttime/src/lib.rs.html#16-329' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/consistenttime/src/lib.rs.html#16-347' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Consistent Time</p>
 
 <p>The goal of this crate is to offer constant time functions which most
-cryptographic computing protocols require to prevent side channeling 
+cryptographic computing protocols require to prevent side channel 
 timing attacks. </p>
 
 <p>These algorithms are not implemented to be efficient. But to take the
-same number of processor cycles if their outcome is true, or false.
+same number of processor cycles if their outcome/path is true, or false.
 The reference used for this crate is <a href="https://golang.org/src/crypto/subtle/constant_time.go">Go-Lang&#39;s
 crypto/subtile</a>
 Which implements a handful of constant time algorithms.</p>
@@ -69,76 +69,84 @@ types a lot easier.</p>
 and vice versa. The machine instructions generated for these
 operations involve no branches or comparison operators,
 see the notes in the source code.</p>
+
+<p>As of the most recent commit there has been an <em>extreme</em> divergence
+from the Go-Lang source. LLVM does MUCH heavier optimizations then 
+Go-ASM does and some <em>combat</em> was necessary. As of</p>
+
+<p><code>consistenttime = &quot;0.2&quot;</code></p>
+
+<p>I am reasonably confident it provides the advertised guarantees.</p>
 </div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u16.html'
                                   title='consistenttime::ct_copy_u16'>ct_copy_u16</a></td>
                            <td class='docblock-short'>
-                                <p>Constant time optional buffer copying</p>
+                                <p>Optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u32.html'
                                   title='consistenttime::ct_copy_u32'>ct_copy_u32</a></td>
                            <td class='docblock-short'>
-                                <p>Constant time optional buffer copying</p>
+                                <p>Optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u64.html'
                                   title='consistenttime::ct_copy_u64'>ct_copy_u64</a></td>
                            <td class='docblock-short'>
-                                <p>Constant time optional buffer copying</p>
+                                <p>Optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_u8.html'
                                   title='consistenttime::ct_copy_u8'>ct_copy_u8</a></td>
                            <td class='docblock-short'>
-                                <p>Constant time optional buffer copying</p>
+                                <p>Optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_copy_usize.html'
                                   title='consistenttime::ct_copy_usize'>ct_copy_usize</a></td>
                            <td class='docblock-short'>
-                                <p>Constant time optional buffer copying</p>
+                                <p>Optional buffer copying</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u16.html'
                                   title='consistenttime::ct_select_u16'>ct_select_u16</a></td>
                            <td class='docblock-short'>
-                                <p>Optional value selection.</p>
+                                <p>Optional swapping.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u32.html'
                                   title='consistenttime::ct_select_u32'>ct_select_u32</a></td>
                            <td class='docblock-short'>
-                                <p>Optional value selection.</p>
+                                <p>Optional swapping.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u64.html'
                                   title='consistenttime::ct_select_u64'>ct_select_u64</a></td>
                            <td class='docblock-short'>
-                                <p>Optional value selection.</p>
+                                <p>Optional swapping.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_u8.html'
                                   title='consistenttime::ct_select_u8'>ct_select_u8</a></td>
                            <td class='docblock-short'>
-                                <p>Optional value selection.</p>
+                                <p>Optional swapping.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='fn' href='fn.ct_select_usize.html'
                                   title='consistenttime::ct_select_usize'>ct_select_usize</a></td>
                            <td class='docblock-short'>
-                                <p>Optional value selection.</p>
+                                <p>Optional swapping.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>

@@ -47,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-76' class='srclink' href='../src/consistenttime/src/lib.rs.html#235-239' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn ct_select_u16(flag: bool, x: u16, y: u16) -&gt; u16</pre><div class='docblock'><p>Optional value selection.</p>
+               </span><a id='src-76' class='srclink' href='../src/consistenttime/src/lib.rs.html#256-260' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub extern fn ct_select_u16(flag: bool, x: u16, y: u16) -&gt; u16</pre><div class='docblock'><p>Optional swapping.</p>
 
 <p>Allow to set a varible optionally at the same speed without
 branching, or changing speed.</p>
@@ -56,6 +56,13 @@ branching, or changing speed.</p>
 <p>Returns X if flag == True.</p>
 
 <p>Returns Y if flag == False.</p>
+
+<p>At compile time this becomes a CMOV. This <em>is</em> a brach.
+The branch misprediction cost is ~20cycles. And if this
+is incurred does not depend on the input, but the 
+random state of our machine + quantum winds.</p>
+
+<p>This should provide a consistent guarantee of speed.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

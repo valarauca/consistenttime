@@ -47,13 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-136' class='srclink' href='../src/consistenttime/src/lib.rs.html#281-296' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn ct_copy_u64(flag: bool, x: &amp;mut [u64], y: &amp;[u64])</pre><div class='docblock'><p>Constant time optional buffer copying</p>
+               </span><a id='src-130' class='srclink' href='../src/consistenttime/src/lib.rs.html#303-314' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub extern fn ct_copy_u64(flag: bool, x: &amp;mut [u64], y: &amp;[u64])</pre><div class='docblock'><p>Optional buffer copying</p>
 
-<p>Copies the value of Y into X (provides slices are equal length)
-IF flag == True</p>
+<p>IF flag == True THEN X will be set to Y</p>
 
-<p>If flag == False X is left unchanged.</p>
+<p>If flag == False THEN X is unchanged</p>
 
 <h1 id='panic' class='section-header'><a href='#panic'>Panic:</a></h1>
 <p>This function will panic if X and Y are not equal length. </p>

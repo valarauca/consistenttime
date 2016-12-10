@@ -47,11 +47,13 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-42' class='srclink' href='../src/consistenttime/src/lib.rs.html#187-198' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn ct_u16_slice_eq(x: &amp;[u16], y: &amp;[u16]) -&gt; bool</pre><div class='docblock'><p>Check the equality of slices.</p>
+               </span><a id='src-42' class='srclink' href='../src/consistenttime/src/lib.rs.html#199-210' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub extern fn ct_u16_slice_eq(x: &amp;[u16], y: &amp;[u16]) -&gt; bool</pre><div class='docblock'><p>Check the equality of slices.</p>
 
 <p>This will transverse the entire slice reguardless of if a
-conflict is found early. </p>
+conflict is found early or not. This way an external hacker
+can not guess the contents of a buffer byte by byte and 
+carefully measure the timing responses.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

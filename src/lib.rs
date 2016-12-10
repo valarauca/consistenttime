@@ -16,11 +16,11 @@
 //!Consistent Time
 //!
 //!The goal of this crate is to offer constant time functions which most
-//!cryptographic computing protocols require to prevent side channeling 
+//!cryptographic computing protocols require to prevent side channel 
 //!timing attacks. 
 //!
 //!These algorithms are not implemented to be efficient. But to take the
-//!same number of processor cycles if their outcome is true, or false.
+//!same number of processor cycles if their outcome/path is true, or false.
 //!The reference used for this crate is [Go-Lang's
 //!crypto/subtile](https://golang.org/src/crypto/subtle/constant_time.go)
 //!Which implements a handful of constant time algorithms.
@@ -34,6 +34,14 @@
 //!and vice versa. The machine instructions generated for these
 //!operations involve no branches or comparison operators,
 //!see the notes in the source code.
+//!
+//!As of the most recent commit there has been an _extreme_ divergence
+//!from the Go-Lang source. LLVM does MUCH heavier optimizations then 
+//!Go-ASM does and some _combat_ was necessary. As of
+//!
+//!`consistenttime = "0.2"`
+//!
+//!I am reasonably confident it provides the advertised guarantees.
 
 
 #![no_std]
@@ -116,9 +124,10 @@ macro_rules! ct_eq_gen {
         ;; $test_name: ident, $test_v0: expr, $test_v1: expr) => {
         ///Tests if two values are equal in constant time.
         ///
-        ///XORs, Shift Rights, AND are all that are used. There is
-        ///no branching.
-        pub fn $name( x: $code, y: $code) -> bool {
+        ///Completely avoids branching.
+        #[no_mangle]
+        #[inline(never)]
+        pub extern "C" fn $name( x: $code, y: $code) -> bool {
             let mut z: $code = $max ^ (x^y);
             $(
                 z &= z.wrapping_shr($shr);
@@ -183,8 +192,11 @@ macro_rules! ct_eq_slice_gen {
         ///Check the equality of slices.
         ///
         ///This will transverse the entire slice reguardless of if a
-        ///conflict is found early. 
-        pub fn $name( x: &[$code], y: &[$code]) -> bool {
+        ///conflict is found early or not. This way an external hacker
+        ///can not guess the contents of a buffer byte by byte and 
+        ///carefully measure the timing responses.
+        #[no_mangle]
+        pub extern "C" fn $name( x: &[$code], y: &[$code]) -> bool {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
@@ -224,7 +236,7 @@ ct_eq_slice_gen!(ct_usize_slice_eq,ct_usize_eq,usize;;
 
 macro_rules! ct_select_gen {
     ($name:ident,$max:expr,$code:ty;;$test_name:ident,$v0:expr,$v1:expr) => {
-        ///Optional value selection.
+        ///Optional swapping.
         ///
         ///Allow to set a varible optionally at the same speed without
         ///branching, or changing speed.
@@ -232,8 +244,17 @@ macro_rules! ct_select_gen {
         ///Returns X if flag == True.
         ///
         ///Returns Y if flag == False.
-        pub fn $name(flag: bool, x: $code, y: $code) -> $code {
-            let val: u8 = unsafe{ trans(flag) };
+        ///
+        ///At compile time this becomes a CMOV. This _is_ a brach.
+        ///The branch misprediction cost is ~20cycles. And if this
+        ///is incurred does not depend on the input, but the 
+        ///random state of our machine + quantum winds.
+        ///
+        ///This should provide a consistent guarantee of speed.
+        #[no_mangle]
+        #[inline(never)]
+        pub extern "C" fn $name(flag: bool, x: $code, y: $code) -> $code {
+            let val: u8 = unsafe{trans(flag)};
             let flag = val as $code;
             (($max ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
         }
@@ -267,31 +288,28 @@ ct_select_gen!(ct_select_usize,MAX_USIZE,usize;;
     test_ct_select_usize,155,4);
 
 macro_rules! ct_constant_copy_gen {
-    ($name:ident,$max:expr,$code:ty;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
-        ///Constant time optional buffer copying
+    ($name:ident,$max:expr,$code:ty,$copy_symbol: ident
+    ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
+        ///Optional buffer copying
         ///
-        ///Copies the value of Y into X (provides slices are equal length)
-        ///IF flag == True
+        ///IF flag == True THEN X will be set to Y
         ///
-        ///If flag == False X is left unchanged.
+        ///If flag == False THEN X is unchanged
         ///
         ///#Panic:
         ///
         ///This function will panic if X and Y are not equal length. 
-        pub fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
+        #[no_mangle]
+        pub extern "C" fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
                 panic!("Consistent Time: Attempted to copy between non-equal lens");
             }
-            //constant time boolean to unsigned int conversion
-            //see note above
-            let val: u8 = unsafe{trans(flag)};
-            let flag = val as $code;
-            let x_mask: $code = flag.wrapping_sub(1);
-            let y_mask: $code = $max ^ flag.wrapping_sub(1);
             for i in 0..x_len {
-                x[i] = (x[i]&x_mask)|(y[i]&y_mask)
+                let y_temp = y[i].clone();
+                let x_temp = x[i].clone();
+                x[i] = $copy_symbol(flag,y_temp,x_temp); 
             }
         }
         #[test]
@@ -317,13 +335,13 @@ macro_rules! ct_constant_copy_gen {
         }
     }
 }
-ct_constant_copy_gen!(ct_copy_u8,MAX_U8,u8;;
+ct_constant_copy_gen!(ct_copy_u8,MAX_U8,u8,ct_select_u8;;
     test_ct_copy_u8,ct_u8_slice_eq,test_ct_copy_u8_panic);
-ct_constant_copy_gen!(ct_copy_u16,MAX_U16,u16;;
+ct_constant_copy_gen!(ct_copy_u16,MAX_U16,u16,ct_select_u16;;
     test_ct_copy_u16,ct_u16_slice_eq,test_ct_copy_u16_panic);
-ct_constant_copy_gen!(ct_copy_u32,MAX_U32,u32;;
+ct_constant_copy_gen!(ct_copy_u32,MAX_U32,u32,ct_select_u32;;
     test_ct_copy_u32,ct_u32_slice_eq,test_ct_copy_u32_panic);
-ct_constant_copy_gen!(ct_copy_u64,MAX_U64,u64;;
+ct_constant_copy_gen!(ct_copy_u64,MAX_U64,u64,ct_select_u64;;
     test_ct_copy_u64,ct_u64_slice_eq,test_ct_copy_u64_panic);
-ct_constant_copy_gen!(ct_copy_usize,MAX_USIZE,usize;;
+ct_constant_copy_gen!(ct_copy_usize,MAX_USIZE,usize,ct_select_usize;;
     test_ct_copy_usize,ct_usize_slice_eq,test_ct_copy_usize_panic);

@@ -15,8 +15,14 @@ To use this crate include:
 
 ```
 [dependencies]
-constanttime = "0.1.0"
+constanttime = "0.2"
 ```
+
+#Audit
+
+Does this crate work as advertised?
+
+I'd sure like to find out! If you know asm, or a lot about low level machine hacking [I'd love your help](https://github.com/valarauca/consistenttime/issues/2).
 
 ####Legal
 
