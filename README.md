@@ -1,4 +1,4 @@
-#constanttime
+#consistenttime
 
 [Documentation](https://valarauca.github.io/consistenttime/consistenttime/index.html)
 
@@ -15,7 +15,7 @@ To use this crate include:
 
 ```
 [dependencies]
-constanttime = "0.2"
+consistenttime = "0.2"
 ```
 
 #Audit
