@@ -198,6 +198,14 @@ ct_eq_gen!(ct_usize_eq,usize,MAX_USIZE,16,8,4,2,1;;
 ct_eq_gen!(ct_usize_eq,usize,MAX_USIZE,32,16,8,4,2,1;;
     test_ct_usize_eq, 859632175648921456, 5);
 
+pub trait ConstantTimeEqSlice : Sized {
+    fn ct_eq_slice(x: &[Self], y: &[Self]) -> bool;
+}
+pub fn ct_eq_slice<T>(x: &[T], y: &[T]) -> bool
+  where T: ConstantTimeEqSlice {
+    <T as ConstantTimeEqSlice>::ct_eq_slice(x,y)
+}
+
 macro_rules! ct_eq_slice_gen {
     ($name:ident,$code: ty;;$test_name:ident,$max: expr) => {
         ///Check the equality of slices.
@@ -219,20 +227,20 @@ macro_rules! ct_eq_slice_gen {
             }
             <$code as ConstantTimeEq>::ct_eq(flag,0)
         }
-        impl<'a> ConstantTimeEq for &'a [$code] {
-            fn ct_eq( x: &'a [$code], y: &'a [$code]) -> bool { $name(x,y) }
+        impl ConstantTimeEqSlice for $code {
+            fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool { $name(x,y) }
         }
         #[test]
         fn $test_name() {
             let x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
             let y: [$code;10] = [$max,$max,$max,$max,$max,$max,$max,$max,$max,$max];
             let z: [$code;10] = [1,1,1,1,1,1,1,1,1,1];
-            assert_eq!( $name( &x, &x), true);
-            assert_eq!( $name( &y, &y), true);
-            assert_eq!( $name( &z, &z), true);
-            assert_eq!( $name( &x, &y), false);
-            assert_eq!( $name( &x, &y), false);
-            assert_eq!( $name( &y, &z), false);
+            assert_eq!( ct_eq_slice( &x, &x), true);
+            assert_eq!( ct_eq_slice( &y, &y), true);
+            assert_eq!( ct_eq_slice( &z, &z), true);
+            assert_eq!( ct_eq_slice( &x, &y), false);
+            assert_eq!( ct_eq_slice( &x, &y), false);
+            assert_eq!( ct_eq_slice( &y, &z), false);
         }
     }
 }
