@@ -114,7 +114,11 @@ fn test_bool_representation() {
 }
 
 pub trait ConstantTimeEq {
-    fn ct_eq( x: Self, y: Self ) -> bool;
+    fn ct_eq(x: Self, y: Self) -> bool;
+}
+pub fn ct_eq<T>(x: T, y: T) -> bool
+  where T: ConstantTimeEq {
+    <T as ConstantTimeEq>::ct_eq(x,y)
 }
 
 /*
@@ -247,6 +251,10 @@ ct_eq_slice_gen!(ct_usize_slice_eq,usize;;
 pub trait ConstantTimeSelect {
     fn ct_select(flag: bool, x: Self, y: Self) -> Self;
 }
+pub fn ct_select<T>(flag: bool, x: T, y: T) -> T
+  where T: ConstantTimeSelect {
+    <T as ConstantTimeSelect>::ct_select(flag,x,y)
+}
 
 macro_rules! ct_select_gen {
     ($name:ident,$max:expr,$code:ty;;$test_name:ident,$v0:expr,$v1:expr) => {
@@ -307,6 +315,10 @@ ct_select_gen!(ct_select_usize,MAX_USIZE,usize;;
 
 pub trait ConstantTimeCopy : Sized {
     fn ct_copy(flag: bool, x: &mut [Self], y: &[Self]);
+}
+pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
+  where T: ConstantTimeCopy {
+    <T as ConstantTimeCopy>::ct_copy(flag,x,y);
 }
 
 macro_rules! ct_constant_copy_gen {
