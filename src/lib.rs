@@ -244,6 +244,10 @@ ct_eq_slice_gen!(ct_usize_slice_eq,usize;;
     test_ct_usize_slice_eq, MAX_USIZE);
 
 
+pub trait ConstantTimeSelect {
+    fn ct_select(flag: bool, x: Self, y: Self) -> Self;
+}
+
 macro_rules! ct_select_gen {
     ($name:ident,$max:expr,$code:ty;;$test_name:ident,$v0:expr,$v1:expr) => {
         ///Optional swapping.
@@ -267,6 +271,9 @@ macro_rules! ct_select_gen {
             let val: u8 = unsafe{trans::<bool,u8>(flag)};
             let flag = val as $code;
             (($max ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
+        }
+        impl ConstantTimeSelect for $code {
+            fn ct_select(flag: bool, x: $code, y: $code) -> $code { $name(flag,x,y) }
         }
         #[test]
         fn $test_name() {
@@ -298,7 +305,7 @@ ct_select_gen!(ct_select_usize,MAX_USIZE,usize;;
     test_ct_select_usize,155,4);
 
 macro_rules! ct_constant_copy_gen {
-    ($name:ident,$max:expr,$code:ty,$copy_symbol: ident
+    ($name:ident,$max:expr,$code:ty
     ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
         ///Optional buffer copying
         ///
@@ -319,7 +326,7 @@ macro_rules! ct_constant_copy_gen {
             for i in 0..x_len {
                 let y_temp = y[i].clone();
                 let x_temp = x[i].clone();
-                x[i] = $copy_symbol(flag,y_temp,x_temp); 
+                x[i] = <$code as ConstantTimeSelect>::ct_select(flag,y_temp,x_temp);
             }
         }
         #[test]
@@ -345,13 +352,13 @@ macro_rules! ct_constant_copy_gen {
         }
     }
 }
-ct_constant_copy_gen!(ct_copy_u8,MAX_U8,u8,ct_select_u8;;
+ct_constant_copy_gen!(ct_copy_u8,MAX_U8,u8;;
     test_ct_copy_u8,ct_u8_slice_eq,test_ct_copy_u8_panic);
-ct_constant_copy_gen!(ct_copy_u16,MAX_U16,u16,ct_select_u16;;
+ct_constant_copy_gen!(ct_copy_u16,MAX_U16,u16;;
     test_ct_copy_u16,ct_u16_slice_eq,test_ct_copy_u16_panic);
-ct_constant_copy_gen!(ct_copy_u32,MAX_U32,u32,ct_select_u32;;
+ct_constant_copy_gen!(ct_copy_u32,MAX_U32,u32;;
     test_ct_copy_u32,ct_u32_slice_eq,test_ct_copy_u32_panic);
-ct_constant_copy_gen!(ct_copy_u64,MAX_U64,u64,ct_select_u64;;
+ct_constant_copy_gen!(ct_copy_u64,MAX_U64,u64;;
     test_ct_copy_u64,ct_u64_slice_eq,test_ct_copy_u64_panic);
-ct_constant_copy_gen!(ct_copy_usize,MAX_USIZE,usize,ct_select_usize;;
+ct_constant_copy_gen!(ct_copy_usize,MAX_USIZE,usize;;
     test_ct_copy_usize,ct_usize_slice_eq,test_ct_copy_usize_panic);
