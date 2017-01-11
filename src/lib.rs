@@ -161,24 +161,24 @@ macro_rules! ct_eq_gen {
         fn $test_name() {
             let x: $code = $test_v0;
             let y: $code = $test_v1;
-            assert_eq!( $name($max,$max), true);
-            assert_eq!( $name(x,x), true);
-            assert_eq!( $name(y,y), true);
-            assert_eq!( $name(0,0), true);
-            assert_eq!( $name(1,1), true);
-            assert_eq!( $name($max,0), false);
-            assert_eq!( $name($max,1), false);
-            assert_eq!( $name($max,x), false);
-            assert_eq!( $name($max,y), false);
-            assert_eq!( $name(y,1), false);
-            assert_eq!( $name(x,1), false);
-            assert_eq!( $name(y,0), false);
-            assert_eq!( $name(x,0), false);
-            assert_eq!( $name(x,y), false);
+            assert_eq!( ct_eq($max,$max), true);
+            assert_eq!( ct_eq(x,x), true);
+            assert_eq!( ct_eq(y,y), true);
+            assert_eq!( ct_eq::<$code>(0,0), true);
+            assert_eq!( ct_eq::<$code>(1,1), true);
+            assert_eq!( ct_eq::<$code>($max,0), false);
+            assert_eq!( ct_eq::<$code>($max,1), false);
+            assert_eq!( ct_eq($max,x), false);
+            assert_eq!( ct_eq($max,y), false);
+            assert_eq!( ct_eq(y,1), false);
+            assert_eq!( ct_eq(x,1), false);
+            assert_eq!( ct_eq(y,0), false);
+            assert_eq!( ct_eq(x,0), false);
+            assert_eq!( ct_eq(x,y), false);
             $(
-                assert_eq!( $name($shr,$shr), true);
-                assert_eq!( $name($shr,0), false);
-                assert_eq!( $name($shr,$max), false);
+                assert_eq!( ct_eq::<$code>($shr,$shr), true);
+                assert_eq!( ct_eq::<$code>($shr,0), false);
+                assert_eq!( ct_eq::<$code>($shr,$max), false);
             )*
         }
     }
