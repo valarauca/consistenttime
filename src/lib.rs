@@ -43,6 +43,7 @@
 //!
 //!I am reasonably confident it provides the advertised guarantees.
 
+#![feature(concat_idents)]
 
 #![no_std]
 use core::mem::transmute as trans;
@@ -108,13 +109,54 @@ fn test_bool_representation() {
     assert_eq!( f_val, 0x00u8);
 }
 
-pub trait ConstantTimeEq {
+pub trait ConstantTime : Sized {
     fn ct_eq(x: Self, y: Self) -> bool;
+    fn ct_eq_slice(x: &[Self], y: &[Self]) -> bool;
+    fn ct_select(flag: bool, x: Self, y: Self) -> Self;
+    fn ct_copy(flag: bool, x: &mut [Self], y: &[Self]);
 }
 pub fn ct_eq<T>(x: T, y: T) -> bool
-  where T: ConstantTimeEq {
-    <T as ConstantTimeEq>::ct_eq(x,y)
+  where T: ConstantTime {
+    <T as ConstantTime>::ct_eq(x,y)
 }
+pub fn ct_eq_slice<T>(x: &[T], y: &[T]) -> bool
+  where T: ConstantTime {
+    <T as ConstantTime>::ct_eq_slice(x,y)
+}
+pub fn ct_select<T>(flag: bool, x: T, y: T) -> T
+  where T: ConstantTime {
+    <T as ConstantTime>::ct_select(flag,x,y)
+}
+pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
+  where T: ConstantTime {
+    <T as ConstantTime>::ct_copy(flag,x,y);
+}
+
+macro_rules! impl_ConstantTime {
+    ($code: ident) => {
+        impl ConstantTime for $code {
+            fn ct_eq( x: $code, y: $code) -> bool {
+                concat_idents!(ct_,$code,_eq)(x,y) 
+            }
+            fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool {
+                concat_idents!(ct_,$code,_slice_eq)(x,y) 
+            }
+            fn ct_select(flag: bool, x: $code, y: $code) -> $code {
+                concat_idents!(ct_select_,$code)(flag,x,y) 
+            }
+            fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) {
+                concat_idents!(ct_copy_,$code)(flag,x,y) 
+            }
+        }
+    }
+}
+
+impl_ConstantTime!(u8);
+impl_ConstantTime!(u16);
+impl_ConstantTime!(u32);
+impl_ConstantTime!(u64);
+impl_ConstantTime!(usize);
+
 
 /*
  * The purpose of the below macro is two fold. 
@@ -148,9 +190,6 @@ macro_rules! ct_eq_gen {
              */
             let val = z as u8;
             unsafe{trans::<u8,bool>(val)}
-        }
-        impl ConstantTimeEq for $code {
-            fn ct_eq( x: $code, y: $code) -> bool { $name(x,y) }
         }
         #[test]
         fn $test_name() {
@@ -194,14 +233,6 @@ ct_eq_gen!(ct_usize_eq,usize,16,8,4,2,1;;
 ct_eq_gen!(ct_usize_eq,usize,32,16,8,4,2,1;;
     test_ct_usize_eq, 859632175648921456, 5);
 
-pub trait ConstantTimeEqSlice : Sized {
-    fn ct_eq_slice(x: &[Self], y: &[Self]) -> bool;
-}
-pub fn ct_eq_slice<T>(x: &[T], y: &[T]) -> bool
-  where T: ConstantTimeEqSlice {
-    <T as ConstantTimeEqSlice>::ct_eq_slice(x,y)
-}
-
 macro_rules! ct_eq_slice_gen {
     ($name:ident,$code: ident;;$test_name:ident) => {
         ///Check the equality of slices.
@@ -221,10 +252,7 @@ macro_rules! ct_eq_slice_gen {
             for i in 0..x_len {
                 flag |= x[i] ^ y[i];
             }
-            <$code as ConstantTimeEq>::ct_eq(flag,0)
-        }
-        impl ConstantTimeEqSlice for $code {
-            fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool { $name(x,y) }
+            <$code as ConstantTime>::ct_eq(flag,0)
         }
         #[test]
         fn $test_name() {
@@ -253,14 +281,6 @@ ct_eq_slice_gen!(ct_usize_slice_eq,usize;;
     test_ct_usize_slice_eq);
 
 
-pub trait ConstantTimeSelect {
-    fn ct_select(flag: bool, x: Self, y: Self) -> Self;
-}
-pub fn ct_select<T>(flag: bool, x: T, y: T) -> T
-  where T: ConstantTimeSelect {
-    <T as ConstantTimeSelect>::ct_select(flag,x,y)
-}
-
 macro_rules! ct_select_gen {
     ($name:ident,$code:ident;;$test_name:ident,$v0:expr,$v1:expr) => {
         ///Optional swapping.
@@ -284,9 +304,6 @@ macro_rules! ct_select_gen {
             let val: u8 = unsafe{trans::<bool,u8>(flag)};
             let flag = val as $code;
             ((max!($code) ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
-        }
-        impl ConstantTimeSelect for $code {
-            fn ct_select(flag: bool, x: $code, y: $code) -> $code { $name(flag,x,y) }
         }
         #[test]
         fn $test_name() {
@@ -318,15 +335,6 @@ ct_select_gen!(ct_select_u64,u64;;
 ct_select_gen!(ct_select_usize,usize;;
     test_ct_select_usize,155,4);
 
-
-pub trait ConstantTimeCopy : Sized {
-    fn ct_copy(flag: bool, x: &mut [Self], y: &[Self]);
-}
-pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
-  where T: ConstantTimeCopy {
-    <T as ConstantTimeCopy>::ct_copy(flag,x,y);
-}
-
 macro_rules! ct_constant_copy_gen {
     ($name:ident,$code:ident
     ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
@@ -349,11 +357,8 @@ macro_rules! ct_constant_copy_gen {
             for i in 0..x_len {
                 let y_temp = y[i].clone();
                 let x_temp = x[i].clone();
-                x[i] = <$code as ConstantTimeSelect>::ct_select(flag,y_temp,x_temp);
+                x[i] = <$code as ConstantTime>::ct_select(flag,y_temp,x_temp);
             }
-        }
-        impl ConstantTimeCopy for $code {
-            fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) { $name(flag,x,y) }
         }
         #[test]
         fn $test_name() {
