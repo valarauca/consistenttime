@@ -144,7 +144,7 @@ macro_rules! ct_eq_gen {
              *  remain 0x01 or 0x00.
              */
             let val = z as u8;
-            unsafe{trans(val)}
+            unsafe{trans::<u8,bool>(val)}
         }
         #[test]
         fn $test_name() {
@@ -254,7 +254,7 @@ macro_rules! ct_select_gen {
         #[no_mangle]
         #[inline(never)]
         pub extern "C" fn $name(flag: bool, x: $code, y: $code) -> $code {
-            let val: u8 = unsafe{trans(flag)};
+            let val: u8 = unsafe{trans::<bool,u8>(flag)};
             let flag = val as $code;
             (($max ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
         }
