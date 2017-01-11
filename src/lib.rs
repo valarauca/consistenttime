@@ -113,6 +113,10 @@ fn test_bool_representation() {
     assert_eq!( f_val, 0x00u8);
 }
 
+pub trait ConstantTimeEq {
+    fn ct_eq( x: Self, y: Self ) -> bool;
+}
+
 /*
  * The purpose of the below macro is two fold. 
  *  1. Define the function to do constant unsigned integer comparisons
@@ -145,6 +149,9 @@ macro_rules! ct_eq_gen {
              */
             let val = z as u8;
             unsafe{trans::<u8,bool>(val)}
+        }
+        impl ConstantTimeEq for $code {
+            fn ct_eq( x: $code, y: $code) -> bool { $name(x,y) }
         }
         #[test]
         fn $test_name() {
@@ -188,7 +195,7 @@ ct_eq_gen!(ct_usize_eq,usize,MAX_USIZE,32,16,8,4,2,1;;
     test_ct_usize_eq, 859632175648921456, 5);
 
 macro_rules! ct_eq_slice_gen {
-    ($name:ident,$eq:ident,$code: ty;;$test_name:ident,$max: expr) => {
+    ($name:ident,$code: ty;;$test_name:ident,$max: expr) => {
         ///Check the equality of slices.
         ///
         ///This will transverse the entire slice reguardless of if a
@@ -206,7 +213,10 @@ macro_rules! ct_eq_slice_gen {
             for i in 0..x_len {
                 flag |= x[i] ^ y[i];
             }
-            $eq(flag,0)
+            <$code as ConstantTimeEq>::ct_eq(flag,0)
+        }
+        impl<'a> ConstantTimeEq for &'a [$code] {
+            fn ct_eq( x: &'a [$code], y: &'a [$code]) -> bool { $name(x,y) }
         }
         #[test]
         fn $test_name() {
@@ -222,15 +232,15 @@ macro_rules! ct_eq_slice_gen {
         }
     }
 }
-ct_eq_slice_gen!(ct_u8_slice_eq,ct_u8_eq,u8;;
+ct_eq_slice_gen!(ct_u8_slice_eq,u8;;
     test_ct_u8_slice_eq, MAX_U8);
-ct_eq_slice_gen!(ct_u16_slice_eq,ct_u16_eq,u16;;
+ct_eq_slice_gen!(ct_u16_slice_eq,u16;;
     test_ct_u16_slice_eq, MAX_U16);
-ct_eq_slice_gen!(ct_u32_slice_eq,ct_u32_eq,u32;;
+ct_eq_slice_gen!(ct_u32_slice_eq,u32;;
     test_ct_u32_slice_eq, MAX_U32);
-ct_eq_slice_gen!(ct_u64_slice_eq,ct_u64_eq,u64;;
+ct_eq_slice_gen!(ct_u64_slice_eq,u64;;
     test_ct_u64_slice_eq, MAX_U64);
-ct_eq_slice_gen!(ct_usize_slice_eq,ct_usize_eq,usize;;
+ct_eq_slice_gen!(ct_usize_slice_eq,usize;;
     test_ct_usize_slice_eq, MAX_USIZE);
 
 
