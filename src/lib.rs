@@ -304,6 +304,11 @@ ct_select_gen!(ct_select_u64,MAX_U64,u64;;
 ct_select_gen!(ct_select_usize,MAX_USIZE,usize;;
     test_ct_select_usize,155,4);
 
+
+pub trait ConstantTimeCopy : Sized {
+    fn ct_copy(flag: bool, x: &mut [Self], y: &[Self]);
+}
+
 macro_rules! ct_constant_copy_gen {
     ($name:ident,$max:expr,$code:ty
     ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
@@ -328,6 +333,9 @@ macro_rules! ct_constant_copy_gen {
                 let x_temp = x[i].clone();
                 x[i] = <$code as ConstantTimeSelect>::ct_select(flag,y_temp,x_temp);
             }
+        }
+        impl ConstantTimeCopy for $code {
+            fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) { $name(flag,x,y) }
         }
         #[test]
         fn $test_name() {
