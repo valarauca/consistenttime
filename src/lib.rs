@@ -285,18 +285,18 @@ macro_rules! ct_select_gen {
         }
         #[test]
         fn $test_name() {
-            assert_eq!( $name(true,$v0,$v1), $v0);
-            assert_eq!( $name(false,$v0,$v1), $v1);
-            assert_eq!( $name(true,$v1,$v0), $v1);
-            assert_eq!( $name(false,$v1,$v0), $v0);
-            assert_eq!( $name(true,$v0,$max), $v0);
-            assert_eq!( $name(false,$v0,$max), $max);
-            assert_eq!( $name(true,$max,$v0), $max);
-            assert_eq!( $name(false,$max,$v0), $v0);
-            assert_eq!( $name(true,$max,$v1), $max);
-            assert_eq!( $name(false,$max,$v1), $v1);
-            assert_eq!( $name(true,$v1,$max), $v1);
-            assert_eq!( $name(false,$v1,$max), $max);
+            assert_eq!( ct_select::<$code>(true,$v0,$v1), $v0);
+            assert_eq!( ct_select::<$code>(false,$v0,$v1), $v1);
+            assert_eq!( ct_select::<$code>(true,$v1,$v0), $v1);
+            assert_eq!( ct_select::<$code>(false,$v1,$v0), $v0);
+            assert_eq!( ct_select::<$code>(true,$v0,$max), $v0);
+            assert_eq!( ct_select::<$code>(false,$v0,$max), $max);
+            assert_eq!( ct_select::<$code>(true,$max,$v0), $max);
+            assert_eq!( ct_select::<$code>(false,$max,$v0), $v0);
+            assert_eq!( ct_select::<$code>(true,$max,$v1), $max);
+            assert_eq!( ct_select::<$code>(false,$max,$v1), $v1);
+            assert_eq!( ct_select::<$code>(true,$v1,$max), $v1);
+            assert_eq!( ct_select::<$code>(false,$v1,$max), $max);
         }
     }
 }
