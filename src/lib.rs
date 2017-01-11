@@ -354,9 +354,9 @@ macro_rules! ct_constant_copy_gen {
             let base: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
             let mut x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
             let y: [$code;10] = [$max,$max,$max,$max,$max,$max,$max,$max,$max,$max];
-            $name(false,&mut x, &y);
+            ct_copy(false,&mut x, &y);
             assert_eq!( $sl_eq(&x,&base), true);
-            $name(true,&mut x, &y);
+            ct_copy(true,&mut x, &y);
             assert_eq!( $sl_eq(&x,&base), false);
             assert_eq!( $sl_eq(&x,&y), true);
         }
