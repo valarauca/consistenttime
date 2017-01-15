@@ -43,8 +43,6 @@
 //!
 //!I am reasonably confident it provides the advertised guarantees.
 
-#![feature(concat_idents)]
-
 #![no_std]
 use core::mem::transmute as trans;
 
@@ -133,29 +131,29 @@ pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
 }
 
 macro_rules! impl_ConstantTime {
-    ($code: ident) => {
+    ($code: ident, $eq: ident, $slice_eq: ident, $select: ident, $copy: ident) => {
         impl ConstantTime for $code {
             fn ct_eq( x: $code, y: $code) -> bool {
-                concat_idents!(ct_,$code,_eq)(x,y) 
+                $eq(x,y)
             }
             fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool {
-                concat_idents!(ct_,$code,_slice_eq)(x,y) 
+                $slice_eq(x,y)
             }
             fn ct_select(flag: bool, x: $code, y: $code) -> $code {
-                concat_idents!(ct_select_,$code)(flag,x,y) 
+                $select(flag,x,y)
             }
             fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) {
-                concat_idents!(ct_copy_,$code)(flag,x,y) 
+                $copy(flag,x,y)
             }
         }
     }
 }
 
-impl_ConstantTime!(u8);
-impl_ConstantTime!(u16);
-impl_ConstantTime!(u32);
-impl_ConstantTime!(u64);
-impl_ConstantTime!(usize);
+impl_ConstantTime!(u8, ct_u8_eq, ct_u8_slice_eq, ct_select_u8, ct_copy_u8);
+impl_ConstantTime!(u16, ct_u16_eq, ct_u16_slice_eq, ct_select_u16, ct_copy_u16);
+impl_ConstantTime!(u32, ct_u32_eq, ct_u32_slice_eq, ct_select_u32, ct_copy_u32);
+impl_ConstantTime!(u64, ct_u64_eq, ct_u64_slice_eq, ct_select_u64, ct_copy_u64);
+impl_ConstantTime!(usize, ct_usize_eq, ct_usize_slice_eq, ct_select_usize, ct_copy_usize);
 
 
 /*
