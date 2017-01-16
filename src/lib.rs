@@ -201,9 +201,14 @@ macro_rules! ct_eq_gen {
             let val = z as u8;
             unsafe{super::trans::<u8,bool>(val)}
         }
+
+        #[cfg(test)]
+        mod eq_tests {
+        use super::*;
+        use super::super::ct_eq;
+
         #[test]
         fn test_ct_eq() {
-            use super::ct_eq;
             let x: C = $test_v0;
             let y: C = $test_v1;
             assert_eq!( ct_eq(MAX,MAX), true);
@@ -226,6 +231,8 @@ macro_rules! ct_eq_gen {
                 assert_eq!( ct_eq::<C>($shr,MAX), false);
             )*
         }
+
+        } // mod eq_tests
     }
 }
 
@@ -250,9 +257,14 @@ macro_rules! ct_eq_slice_gen {
             }
             <C as super::ConstantTime>::ct_eq(flag,0)
         }
+
+        #[cfg(test)]
+        mod slice_eq_tests {
+        use super::*;
+        use super::super::ct_eq_slice;
+
         #[test]
         fn test_ct_slice_eq() {
-            use super::ct_eq_slice;
             let x: [C;10] = [0,0,0,0,0,0,0,0,0,0];
             let y: [C;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
             let z: [C;10] = [1,1,1,1,1,1,1,1,1,1];
@@ -263,6 +275,8 @@ macro_rules! ct_eq_slice_gen {
             assert_eq!( ct_eq_slice( &x, &y), false);
             assert_eq!( ct_eq_slice( &y, &z), false);
         }
+
+        } // mod slice_eq_tests
     }
 }
 
@@ -291,9 +305,14 @@ macro_rules! ct_select_gen {
             let flag = val as C;
             ((MAX ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
         }
+
+        #[cfg(test)]
+        mod select_tests {
+        use super::*;
+        use super::super::ct_select;
+
         #[test]
         fn test_ct_select() {
-            use super::ct_select;
             assert_eq!( ct_select::<C>(true,$v0,$v1), $v0);
             assert_eq!( ct_select::<C>(false,$v0,$v1), $v1);
             assert_eq!( ct_select::<C>(true,$v1,$v0), $v1);
@@ -307,6 +326,8 @@ macro_rules! ct_select_gen {
             assert_eq!( ct_select::<C>(true,$v1,MAX), $v1);
             assert_eq!( ct_select::<C>(false,$v1,MAX), MAX);
         }
+
+        } // mod select_tests
     }
 }
 
@@ -335,16 +356,22 @@ macro_rules! ct_constant_copy_gen {
                 x[i] = <C as super::ConstantTime>::ct_select(flag,y_temp,x_temp);
             }
         }
+
+        #[cfg(test)]
+        mod copy_tests {
+        use super::*;
+        use super::super::ConstantTime;
+
         #[test]
         fn test_ct_copy() {
             let base: [C;10] = [0,0,0,0,0,0,0,0,0,0];
             let mut x: [C;10] = [0,0,0,0,0,0,0,0,0,0];
             let y: [C;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
             $ct_copy(false,&mut x, &y);
-            assert_eq!( <C as super::ConstantTime>::ct_eq_slice(&x,&base), true);
+            assert_eq!( <C as ConstantTime>::ct_eq_slice(&x,&base), true);
             $ct_copy(true,&mut x, &y);
-            assert_eq!( <C as super::ConstantTime>::ct_eq_slice(&x,&base), false);
-            assert_eq!( <C as super::ConstantTime>::ct_eq_slice(&x,&y), true);
+            assert_eq!( <C as ConstantTime>::ct_eq_slice(&x,&base), false);
+            assert_eq!( <C as ConstantTime>::ct_eq_slice(&x,&y), true);
         }
         #[test]
         #[should_panic]
@@ -356,6 +383,8 @@ macro_rules! ct_constant_copy_gen {
             //value of flag is irrelevant
             $ct_copy(false,&mut x,&base);
         }
+
+        } // mod copy_tests
     }
 }
 
