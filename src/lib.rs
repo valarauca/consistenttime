@@ -46,8 +46,6 @@
 #![no_std]
 use core::mem::transmute as trans;
 
-macro_rules! max { ($t:ident) => { ::core::$t::MAX } }
-
 
 /*
  * Rust booleans are effectively u8's with typing sugar.
@@ -108,40 +106,54 @@ fn test_bool_representation() {
 }
 
 pub trait ConstantTime : Sized {
+    #[inline(always)]
     fn ct_eq(x: Self, y: Self) -> bool;
+    #[inline(always)]
     fn ct_eq_slice(x: &[Self], y: &[Self]) -> bool;
+    #[inline(always)]
     fn ct_select(flag: bool, x: Self, y: Self) -> Self;
+    #[inline(always)]
     fn ct_copy(flag: bool, x: &mut [Self], y: &[Self]);
 }
 pub fn ct_eq<T>(x: T, y: T) -> bool
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_eq(x,y)
 }
 pub fn ct_eq_slice<T>(x: &[T], y: &[T]) -> bool
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_eq_slice(x,y)
 }
 pub fn ct_select<T>(flag: bool, x: T, y: T) -> T
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_select(flag,x,y)
 }
 pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_copy(flag,x,y);
 }
 
 macro_rules! impl_ConstantTime {
     ($code: ident, $eq: ident, $slice_eq: ident, $select: ident, $copy: ident) => {
+        pub use $code::{$eq,$slice_eq,$select,$copy};
+
         impl ConstantTime for $code {
+            #[inline(always)]
             fn ct_eq( x: $code, y: $code) -> bool {
                 $eq(x,y)
             }
+            #[inline(always)]
             fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool {
                 $slice_eq(x,y)
             }
+            #[inline(always)]
             fn ct_select(flag: bool, x: $code, y: $code) -> $code {
                 $select(flag,x,y)
             }
+            #[inline(always)]
             fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) {
                 $copy(flag,x,y)
             }
@@ -163,15 +175,15 @@ impl_ConstantTime!(usize, ct_usize_eq, ct_usize_slice_eq, ct_select_usize, ct_co
  *
  */
 macro_rules! ct_eq_gen {
-    ($name: ident, $code: ident, $($shr: expr),*
-        ;; $test_name: ident, $test_v0: expr, $test_v1: expr) => {
+    ($name: ident, $($shr: expr),*
+        ;; $test_v0: expr, $test_v1: expr) => {
         ///Tests if two values are equal in constant time.
         ///
         ///Completely avoids branching.
         #[no_mangle]
         #[inline(never)]
-        pub extern "C" fn $name( x: $code, y: $code) -> bool {
-            let mut z: $code = max!($code) ^ (x^y);
+        pub extern "C" fn $name( x: C, y: C) -> bool {
+            let mut z: C = MAX ^ (x^y);
             $(
                 z &= z.wrapping_shr($shr);
             )*
@@ -187,20 +199,25 @@ macro_rules! ct_eq_gen {
              *  remain 0x01 or 0x00.
              */
             let val = z as u8;
-            unsafe{trans::<u8,bool>(val)}
+            unsafe{super::trans::<u8,bool>(val)}
         }
+
+        #[cfg(test)]
+        mod eq_tests {
+        use super::*;
+        use super::super::ct_eq;
+
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            let x: $code = $test_v0;
-            let y: $code = $test_v1;
+        fn test_ct_eq() {
+            let x: C = $test_v0;
+            let y: C = $test_v1;
             assert_eq!( ct_eq(MAX,MAX), true);
             assert_eq!( ct_eq(x,x), true);
             assert_eq!( ct_eq(y,y), true);
-            assert_eq!( ct_eq::<$code>(0,0), true);
-            assert_eq!( ct_eq::<$code>(1,1), true);
-            assert_eq!( ct_eq::<$code>(MAX,0), false);
-            assert_eq!( ct_eq::<$code>(MAX,1), false);
+            assert_eq!( ct_eq::<C>(0,0), true);
+            assert_eq!( ct_eq::<C>(1,1), true);
+            assert_eq!( ct_eq::<C>(MAX,0), false);
+            assert_eq!( ct_eq::<C>(MAX,1), false);
             assert_eq!( ct_eq(MAX,x), false);
             assert_eq!( ct_eq(MAX,y), false);
             assert_eq!( ct_eq(y,1), false);
@@ -209,30 +226,18 @@ macro_rules! ct_eq_gen {
             assert_eq!( ct_eq(x,0), false);
             assert_eq!( ct_eq(x,y), false);
             $(
-                assert_eq!( ct_eq::<$code>($shr,$shr), true);
-                assert_eq!( ct_eq::<$code>($shr,0), false);
-                assert_eq!( ct_eq::<$code>($shr,MAX), false);
+                assert_eq!( ct_eq::<C>($shr,$shr), true);
+                assert_eq!( ct_eq::<C>($shr,0), false);
+                assert_eq!( ct_eq::<C>($shr,MAX), false);
             )*
         }
+
+        } // mod eq_tests
     }
 }
-ct_eq_gen!(ct_u8_eq,u8,4,2,1;;
-    test_ct_u8_eq, 155, 15);
-ct_eq_gen!(ct_u16_eq,u16,8,4,2,1;;
-    test_ct_u16_eq, 32000, 5);
-ct_eq_gen!(ct_u32_eq,u32,16,8,4,2,1;;
-    test_ct_u32_eq, 2000000, 15);
-ct_eq_gen!(ct_u64_eq,u64,32,16,8,4,2,1;;
-    test_ct_u64_eq, 25893654215879, 2);
-#[cfg(target_pointer_width = "32")]
-ct_eq_gen!(ct_usize_eq,usize,16,8,4,2,1;;
-    test_ct_u32_eq, 2082600, 15);
-#[cfg(target_pointer_width = "64")]
-ct_eq_gen!(ct_usize_eq,usize,32,16,8,4,2,1;;
-    test_ct_usize_eq, 859632175648921456, 5);
 
 macro_rules! ct_eq_slice_gen {
-    ($name:ident,$code: ident;;$test_name:ident) => {
+    ($name:ident) => {
         ///Check the equality of slices.
         ///
         ///This will transverse the entire slice reguardless of if a
@@ -240,24 +245,29 @@ macro_rules! ct_eq_slice_gen {
         ///can not guess the contents of a buffer byte by byte and 
         ///carefully measure the timing responses.
         #[no_mangle]
-        pub extern "C" fn $name( x: &[$code], y: &[$code]) -> bool {
+        pub extern "C" fn $name( x: &[C], y: &[C]) -> bool {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
                return false;
             }
-            let mut flag: $code = 0;
+            let mut flag: C = 0;
             for i in 0..x_len {
                 flag |= x[i] ^ y[i];
             }
-            <$code as ConstantTime>::ct_eq(flag,0)
+            <C as super::ConstantTime>::ct_eq(flag,0)
         }
+
+        #[cfg(test)]
+        mod slice_eq_tests {
+        use super::*;
+        use super::super::ct_eq_slice;
+
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            let x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let y: [$code;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
-            let z: [$code;10] = [1,1,1,1,1,1,1,1,1,1];
+        fn test_ct_slice_eq() {
+            let x: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let y: [C;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
+            let z: [C;10] = [1,1,1,1,1,1,1,1,1,1];
             assert_eq!( ct_eq_slice( &x, &x), true);
             assert_eq!( ct_eq_slice( &y, &y), true);
             assert_eq!( ct_eq_slice( &z, &z), true);
@@ -265,22 +275,14 @@ macro_rules! ct_eq_slice_gen {
             assert_eq!( ct_eq_slice( &x, &y), false);
             assert_eq!( ct_eq_slice( &y, &z), false);
         }
+
+        } // mod slice_eq_tests
     }
 }
-ct_eq_slice_gen!(ct_u8_slice_eq,u8;;
-    test_ct_u8_slice_eq);
-ct_eq_slice_gen!(ct_u16_slice_eq,u16;;
-    test_ct_u16_slice_eq);
-ct_eq_slice_gen!(ct_u32_slice_eq,u32;;
-    test_ct_u32_slice_eq);
-ct_eq_slice_gen!(ct_u64_slice_eq,u64;;
-    test_ct_u64_slice_eq);
-ct_eq_slice_gen!(ct_usize_slice_eq,usize;;
-    test_ct_usize_slice_eq);
 
 
 macro_rules! ct_select_gen {
-    ($name:ident,$code:ident;;$test_name:ident,$v0:expr,$v1:expr) => {
+    ($name:ident; $v0:expr,$v1:expr) => {
         ///Optional swapping.
         ///
         ///Allow to set a varible optionally at the same speed without
@@ -298,44 +300,40 @@ macro_rules! ct_select_gen {
         ///This should provide a consistent guarantee of speed.
         #[no_mangle]
         #[inline(never)]
-        pub extern "C" fn $name(flag: bool, x: $code, y: $code) -> $code {
-            let val: u8 = unsafe{trans::<bool,u8>(flag)};
-            let flag = val as $code;
-            ((max!($code) ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
+        pub extern "C" fn $name(flag: bool, x: C, y: C) -> C {
+            let val: u8 = unsafe{super::trans::<bool,u8>(flag)};
+            let flag = val as C;
+            ((MAX ^ flag.wrapping_sub(1))&x)|(flag.wrapping_sub(1)&y)
         }
+
+        #[cfg(test)]
+        mod select_tests {
+        use super::*;
+        use super::super::ct_select;
+
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            assert_eq!( ct_select::<$code>(true,$v0,$v1), $v0);
-            assert_eq!( ct_select::<$code>(false,$v0,$v1), $v1);
-            assert_eq!( ct_select::<$code>(true,$v1,$v0), $v1);
-            assert_eq!( ct_select::<$code>(false,$v1,$v0), $v0);
-            assert_eq!( ct_select::<$code>(true,$v0,MAX), $v0);
-            assert_eq!( ct_select::<$code>(false,$v0,MAX), MAX);
-            assert_eq!( ct_select::<$code>(true,MAX,$v0), MAX);
-            assert_eq!( ct_select::<$code>(false,MAX,$v0), $v0);
-            assert_eq!( ct_select::<$code>(true,MAX,$v1), MAX);
-            assert_eq!( ct_select::<$code>(false,MAX,$v1), $v1);
-            assert_eq!( ct_select::<$code>(true,$v1,MAX), $v1);
-            assert_eq!( ct_select::<$code>(false,$v1,MAX), MAX);
+        fn test_ct_select() {
+            assert_eq!( ct_select::<C>(true,$v0,$v1), $v0);
+            assert_eq!( ct_select::<C>(false,$v0,$v1), $v1);
+            assert_eq!( ct_select::<C>(true,$v1,$v0), $v1);
+            assert_eq!( ct_select::<C>(false,$v1,$v0), $v0);
+            assert_eq!( ct_select::<C>(true,$v0,MAX), $v0);
+            assert_eq!( ct_select::<C>(false,$v0,MAX), MAX);
+            assert_eq!( ct_select::<C>(true,MAX,$v0), MAX);
+            assert_eq!( ct_select::<C>(false,MAX,$v0), $v0);
+            assert_eq!( ct_select::<C>(true,MAX,$v1), MAX);
+            assert_eq!( ct_select::<C>(false,MAX,$v1), $v1);
+            assert_eq!( ct_select::<C>(true,$v1,MAX), $v1);
+            assert_eq!( ct_select::<C>(false,$v1,MAX), MAX);
         }
+
+        } // mod select_tests
     }
 }
 
-ct_select_gen!(ct_select_u8,u8;;
-    test_ct_select_u8,155,4);
-ct_select_gen!(ct_select_u16,u16;;
-    test_ct_select_u16,30597,4);
-ct_select_gen!(ct_select_u32,u32;;
-    test_ct_select_u32,0x0DD74AA2,4);
-ct_select_gen!(ct_select_u64,u64;;
-    test_ct_select_u64,155,4);
-ct_select_gen!(ct_select_usize,usize;;
-    test_ct_select_usize,155,4);
 
 macro_rules! ct_constant_copy_gen {
-    ($name:ident,$code:ident
-    ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
+    ($ct_copy: ident) => {
         ///Optional buffer copying
         ///
         ///IF flag == True THEN X will be set to Y
@@ -346,7 +344,7 @@ macro_rules! ct_constant_copy_gen {
         ///
         ///This function will panic if X and Y are not equal length. 
         #[no_mangle]
-        pub extern "C" fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
+        pub extern "C" fn $ct_copy(flag: bool, x: &mut [C], y: &[C]) {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
@@ -355,40 +353,107 @@ macro_rules! ct_constant_copy_gen {
             for i in 0..x_len {
                 let y_temp = y[i].clone();
                 let x_temp = x[i].clone();
-                x[i] = <$code as ConstantTime>::ct_select(flag,y_temp,x_temp);
+                x[i] = <C as super::ConstantTime>::ct_select(flag,y_temp,x_temp);
             }
         }
+
+        #[cfg(test)]
+        mod copy_tests {
+        use super::*;
+        use super::super::ConstantTime;
+
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            let base: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let mut x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let y: [$code;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
-            ct_copy(false,&mut x, &y);
-            assert_eq!( $sl_eq(&x,&base), true);
-            ct_copy(true,&mut x, &y);
-            assert_eq!( $sl_eq(&x,&base), false);
-            assert_eq!( $sl_eq(&x,&y), true);
+        fn test_ct_copy() {
+            let base: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let mut x: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let y: [C;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
+            $ct_copy(false,&mut x, &y);
+            assert_eq!( <C as ConstantTime>::ct_eq_slice(&x,&base), true);
+            $ct_copy(true,&mut x, &y);
+            assert_eq!( <C as ConstantTime>::ct_eq_slice(&x,&base), false);
+            assert_eq!( <C as ConstantTime>::ct_eq_slice(&x,&y), true);
         }
         #[test]
         #[should_panic]
-        fn $other_test() {
-            let base: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let mut x: [$code;9] = [0,0,0,0,0,0,0,0,0];
+        fn test_ct_copy_panic() {
+            let base: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let mut x: [C;9] = [0,0,0,0,0,0,0,0,0];
             //trigger panic
             //even on false evaluation
             //value of flag is irrelevant
-            $name(false,&mut x,&base);
+            $ct_copy(false,&mut x,&base);
         }
+
+        } // mod copy_tests
     }
 }
-ct_constant_copy_gen!(ct_copy_u8,u8;;
-    test_ct_copy_u8,ct_u8_slice_eq,test_ct_copy_u8_panic);
-ct_constant_copy_gen!(ct_copy_u16,u16;;
-    test_ct_copy_u16,ct_u16_slice_eq,test_ct_copy_u16_panic);
-ct_constant_copy_gen!(ct_copy_u32,u32;;
-    test_ct_copy_u32,ct_u32_slice_eq,test_ct_copy_u32_panic);
-ct_constant_copy_gen!(ct_copy_u64,u64;;
-    test_ct_copy_u64,ct_u64_slice_eq,test_ct_copy_u64_panic);
-ct_constant_copy_gen!(ct_copy_usize,usize;;
-    test_ct_copy_usize,ct_usize_slice_eq,test_ct_copy_usize_panic);
+
+
+macro_rules! ct_mod_gen {
+    ($code: ident) => {
+        type C = $code;
+        const MAX: $code = ::core::$code::MAX;
+    }
+}
+
+mod u8 {
+    ct_mod_gen!(u8);
+
+    ct_eq_gen!(ct_u8_eq, 4,2,1;;
+        155, 15);
+
+    ct_eq_slice_gen!(ct_u8_slice_eq);
+    ct_select_gen!(ct_select_u8; 155,4);
+    ct_constant_copy_gen!(ct_copy_u8);
+}
+
+mod u16 {
+    ct_mod_gen!(u16);
+
+    ct_eq_gen!(ct_u16_eq, 8,4,2,1;;
+        32000, 5);
+
+    ct_eq_slice_gen!(ct_u16_slice_eq);
+    ct_select_gen!(ct_select_u16; 30597,4);
+    ct_constant_copy_gen!(ct_copy_u16);
+}
+
+mod u32 {
+    ct_mod_gen!(u32);
+
+    ct_eq_gen!(ct_u32_eq, 16,8,4,2,1;;
+        2000000, 15);
+
+    ct_eq_slice_gen!(ct_u32_slice_eq);
+    ct_select_gen!(ct_select_u32; 0x0DD74AA2,4);
+    ct_constant_copy_gen!(ct_copy_u32);
+}
+
+mod u64 {
+    ct_mod_gen!(u64);
+
+    ct_eq_gen!(ct_u64_eq, 32,16,8,4,2,1;;
+        25893654215879, 2);
+
+    ct_eq_slice_gen!(ct_u64_slice_eq);
+    ct_select_gen!(ct_select_u64; 155,4);
+    ct_constant_copy_gen!(ct_copy_u64);
+}
+
+mod usize {
+    ct_mod_gen!(usize);
+
+    #[cfg(target_pointer_width = "32")]
+    ct_eq_gen!(ct_usize_eq, 16,8,4,2,1;;
+        test_ct_u32_eq, 2082600, 15);
+    #[cfg(target_pointer_width = "64")]
+    ct_eq_gen!(ct_usize_eq, 32,16,8,4,2,1;;
+        859632175648921456, 5);
+
+    ct_eq_slice_gen!(ct_usize_slice_eq);
+    ct_select_gen!(ct_select_usize; 155,4);
+    ct_constant_copy_gen!(ct_copy_usize);
+}
+
+
+
