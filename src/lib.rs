@@ -46,8 +46,6 @@
 #![no_std]
 use core::mem::transmute as trans;
 
-macro_rules! max { ($t:ident) => { ::core::$t::MAX } }
-
 
 /*
  * Rust booleans are effectively u8's with typing sugar.
@@ -140,7 +138,7 @@ pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
 
 macro_rules! impl_ConstantTime {
     ($code: ident, $eq: ident, $slice_eq: ident, $select: ident, $copy: ident) => {
-        pub use $code::{$slice_eq,$select,$copy};
+        pub use $code::{$eq,$slice_eq,$select,$copy};
 
         impl ConstantTime for $code {
             #[inline(always)]
@@ -177,15 +175,15 @@ impl_ConstantTime!(usize, ct_usize_eq, ct_usize_slice_eq, ct_select_usize, ct_co
  *
  */
 macro_rules! ct_eq_gen {
-    ($name: ident, $code: ident, $($shr: expr),*
-        ;; $test_name: ident, $test_v0: expr, $test_v1: expr) => {
+    ($name: ident, $($shr: expr),*
+        ;; $test_v0: expr, $test_v1: expr) => {
         ///Tests if two values are equal in constant time.
         ///
         ///Completely avoids branching.
         #[no_mangle]
         #[inline(never)]
-        pub extern "C" fn $name( x: $code, y: $code) -> bool {
-            let mut z: $code = max!($code) ^ (x^y);
+        pub extern "C" fn $name( x: C, y: C) -> bool {
+            let mut z: C = MAX ^ (x^y);
             $(
                 z &= z.wrapping_shr($shr);
             )*
@@ -201,20 +199,20 @@ macro_rules! ct_eq_gen {
              *  remain 0x01 or 0x00.
              */
             let val = z as u8;
-            unsafe{trans::<u8,bool>(val)}
+            unsafe{super::trans::<u8,bool>(val)}
         }
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            let x: $code = $test_v0;
-            let y: $code = $test_v1;
+        fn test_ct_eq() {
+            use super::ct_eq;
+            let x: C = $test_v0;
+            let y: C = $test_v1;
             assert_eq!( ct_eq(MAX,MAX), true);
             assert_eq!( ct_eq(x,x), true);
             assert_eq!( ct_eq(y,y), true);
-            assert_eq!( ct_eq::<$code>(0,0), true);
-            assert_eq!( ct_eq::<$code>(1,1), true);
-            assert_eq!( ct_eq::<$code>(MAX,0), false);
-            assert_eq!( ct_eq::<$code>(MAX,1), false);
+            assert_eq!( ct_eq::<C>(0,0), true);
+            assert_eq!( ct_eq::<C>(1,1), true);
+            assert_eq!( ct_eq::<C>(MAX,0), false);
+            assert_eq!( ct_eq::<C>(MAX,1), false);
             assert_eq!( ct_eq(MAX,x), false);
             assert_eq!( ct_eq(MAX,y), false);
             assert_eq!( ct_eq(y,1), false);
@@ -223,27 +221,13 @@ macro_rules! ct_eq_gen {
             assert_eq!( ct_eq(x,0), false);
             assert_eq!( ct_eq(x,y), false);
             $(
-                assert_eq!( ct_eq::<$code>($shr,$shr), true);
-                assert_eq!( ct_eq::<$code>($shr,0), false);
-                assert_eq!( ct_eq::<$code>($shr,MAX), false);
+                assert_eq!( ct_eq::<C>($shr,$shr), true);
+                assert_eq!( ct_eq::<C>($shr,0), false);
+                assert_eq!( ct_eq::<C>($shr,MAX), false);
             )*
         }
     }
 }
-ct_eq_gen!(ct_u8_eq,u8,4,2,1;;
-    test_ct_u8_eq, 155, 15);
-ct_eq_gen!(ct_u16_eq,u16,8,4,2,1;;
-    test_ct_u16_eq, 32000, 5);
-ct_eq_gen!(ct_u32_eq,u32,16,8,4,2,1;;
-    test_ct_u32_eq, 2000000, 15);
-ct_eq_gen!(ct_u64_eq,u64,32,16,8,4,2,1;;
-    test_ct_u64_eq, 25893654215879, 2);
-#[cfg(target_pointer_width = "32")]
-ct_eq_gen!(ct_usize_eq,usize,16,8,4,2,1;;
-    test_ct_u32_eq, 2082600, 15);
-#[cfg(target_pointer_width = "64")]
-ct_eq_gen!(ct_usize_eq,usize,32,16,8,4,2,1;;
-    test_ct_usize_eq, 859632175648921456, 5);
 
 macro_rules! ct_eq_slice_gen {
     ($name:ident) => {
@@ -385,7 +369,10 @@ macro_rules! ct_mod_gen {
 
 mod u8 {
     ct_mod_gen!(u8);
-    // ct_eq_gen!(ct_u8_eq; ..);
+
+    ct_eq_gen!(ct_u8_eq, 4,2,1;;
+        155, 15);
+
     ct_eq_slice_gen!(ct_u8_slice_eq);
     ct_select_gen!(ct_select_u8; 155,4);
     ct_constant_copy_gen!(ct_copy_u8);
@@ -393,7 +380,10 @@ mod u8 {
 
 mod u16 {
     ct_mod_gen!(u16);
-    // ct_eq_gen!(ct_u16_eq; ..);
+
+    ct_eq_gen!(ct_u16_eq, 8,4,2,1;;
+        32000, 5);
+
     ct_eq_slice_gen!(ct_u16_slice_eq);
     ct_select_gen!(ct_select_u16; 30597,4);
     ct_constant_copy_gen!(ct_copy_u16);
@@ -401,7 +391,10 @@ mod u16 {
 
 mod u32 {
     ct_mod_gen!(u32);
-    // ct_eq_gen!(ct_u32_eq; ..);
+
+    ct_eq_gen!(ct_u32_eq, 16,8,4,2,1;;
+        2000000, 15);
+
     ct_eq_slice_gen!(ct_u32_slice_eq);
     ct_select_gen!(ct_select_u32; 0x0DD74AA2,4);
     ct_constant_copy_gen!(ct_copy_u32);
@@ -409,7 +402,10 @@ mod u32 {
 
 mod u64 {
     ct_mod_gen!(u64);
-    // ct_eq_gen!(ct_u64_eq; ..);
+
+    ct_eq_gen!(ct_u64_eq, 32,16,8,4,2,1;;
+        25893654215879, 2);
+
     ct_eq_slice_gen!(ct_u64_slice_eq);
     ct_select_gen!(ct_select_u64; 155,4);
     ct_constant_copy_gen!(ct_copy_u64);
@@ -417,7 +413,14 @@ mod u64 {
 
 mod usize {
     ct_mod_gen!(usize);
-    // ct_eq_gen!(ct_usize_eq; ..);
+
+    #[cfg(target_pointer_width = "32")]
+    ct_eq_gen!(ct_usize_eq, 16,8,4,2,1;;
+        test_ct_u32_eq, 2082600, 15);
+    #[cfg(target_pointer_width = "64")]
+    ct_eq_gen!(ct_usize_eq, 32,16,8,4,2,1;;
+        859632175648921456, 5);
+
     ct_eq_slice_gen!(ct_usize_slice_eq);
     ct_select_gen!(ct_select_usize; 155,4);
     ct_constant_copy_gen!(ct_copy_usize);
