@@ -108,40 +108,52 @@ fn test_bool_representation() {
 }
 
 pub trait ConstantTime : Sized {
+    #[inline(always)]
     fn ct_eq(x: Self, y: Self) -> bool;
+    #[inline(always)]
     fn ct_eq_slice(x: &[Self], y: &[Self]) -> bool;
+    #[inline(always)]
     fn ct_select(flag: bool, x: Self, y: Self) -> Self;
+    #[inline(always)]
     fn ct_copy(flag: bool, x: &mut [Self], y: &[Self]);
 }
 pub fn ct_eq<T>(x: T, y: T) -> bool
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_eq(x,y)
 }
 pub fn ct_eq_slice<T>(x: &[T], y: &[T]) -> bool
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_eq_slice(x,y)
 }
 pub fn ct_select<T>(flag: bool, x: T, y: T) -> T
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_select(flag,x,y)
 }
 pub fn ct_copy<T>(flag: bool, x: &mut [T], y: &[T])
   where T: ConstantTime {
+    #[inline(always)]
     <T as ConstantTime>::ct_copy(flag,x,y);
 }
 
 macro_rules! impl_ConstantTime {
     ($code: ident, $eq: ident, $slice_eq: ident, $select: ident, $copy: ident) => {
         impl ConstantTime for $code {
+            #[inline(always)]
             fn ct_eq( x: $code, y: $code) -> bool {
                 $eq(x,y)
             }
+            #[inline(always)]
             fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool {
                 $slice_eq(x,y)
             }
+            #[inline(always)]
             fn ct_select(flag: bool, x: $code, y: $code) -> $code {
                 $select(flag,x,y)
             }
+            #[inline(always)]
             fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) {
                 $copy(flag,x,y)
             }
