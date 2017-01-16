@@ -147,7 +147,7 @@ macro_rules! impl_ConstantTime {
             }
             #[inline(always)]
             fn ct_eq_slice( x: &[$code], y: &[$code]) -> bool {
-                $slice_eq(x,y)
+                $code::$slice_eq(x,y)
             }
             #[inline(always)]
             fn ct_select(flag: bool, x: $code, y: $code) -> $code {
@@ -155,7 +155,7 @@ macro_rules! impl_ConstantTime {
             }
             #[inline(always)]
             fn ct_copy(flag: bool, x: &mut [$code], y: &[$code]) {
-                $copy(flag,x,y)
+                $code::$copy(flag,x,y)
             }
         }
     }
@@ -244,7 +244,7 @@ ct_eq_gen!(ct_usize_eq,usize,32,16,8,4,2,1;;
     test_ct_usize_eq, 859632175648921456, 5);
 
 macro_rules! ct_eq_slice_gen {
-    ($name:ident,$code: ident;;$test_name:ident) => {
+    ($name:ident) => {
         ///Check the equality of slices.
         ///
         ///This will transverse the entire slice reguardless of if a
@@ -252,24 +252,24 @@ macro_rules! ct_eq_slice_gen {
         ///can not guess the contents of a buffer byte by byte and 
         ///carefully measure the timing responses.
         #[no_mangle]
-        pub extern "C" fn $name( x: &[$code], y: &[$code]) -> bool {
+        pub extern "C" fn $name( x: &[C], y: &[C]) -> bool {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
                return false;
             }
-            let mut flag: $code = 0;
+            let mut flag: C = 0;
             for i in 0..x_len {
                 flag |= x[i] ^ y[i];
             }
-            <$code as ConstantTime>::ct_eq(flag,0)
+            <C as super::ConstantTime>::ct_eq(flag,0)
         }
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            let x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let y: [$code;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
-            let z: [$code;10] = [1,1,1,1,1,1,1,1,1,1];
+        fn test_ct_slice_eq() {
+            use super::ct_eq_slice;
+            let x: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let y: [C;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
+            let z: [C;10] = [1,1,1,1,1,1,1,1,1,1];
             assert_eq!( ct_eq_slice( &x, &x), true);
             assert_eq!( ct_eq_slice( &y, &y), true);
             assert_eq!( ct_eq_slice( &z, &z), true);
@@ -279,16 +279,6 @@ macro_rules! ct_eq_slice_gen {
         }
     }
 }
-ct_eq_slice_gen!(ct_u8_slice_eq,u8;;
-    test_ct_u8_slice_eq);
-ct_eq_slice_gen!(ct_u16_slice_eq,u16;;
-    test_ct_u16_slice_eq);
-ct_eq_slice_gen!(ct_u32_slice_eq,u32;;
-    test_ct_u32_slice_eq);
-ct_eq_slice_gen!(ct_u64_slice_eq,u64;;
-    test_ct_u64_slice_eq);
-ct_eq_slice_gen!(ct_usize_slice_eq,usize;;
-    test_ct_usize_slice_eq);
 
 
 macro_rules! ct_select_gen {
@@ -346,8 +336,7 @@ ct_select_gen!(ct_select_usize,usize;;
     test_ct_select_usize,155,4);
 
 macro_rules! ct_constant_copy_gen {
-    ($name:ident,$code:ident
-    ;;$test_name:ident,$sl_eq:ident,$other_test:ident) => {
+    ($ct_copy: ident) => {
         ///Optional buffer copying
         ///
         ///IF flag == True THEN X will be set to Y
@@ -358,7 +347,7 @@ macro_rules! ct_constant_copy_gen {
         ///
         ///This function will panic if X and Y are not equal length. 
         #[no_mangle]
-        pub extern "C" fn $name(flag: bool, x: &mut [$code], y: &[$code]) {
+        pub extern "C" fn $ct_copy(flag: bool, x: &mut [C], y: &[C]) {
             let x_len = x.len();
             let y_len = y.len();
             if x_len != y_len {
@@ -367,40 +356,80 @@ macro_rules! ct_constant_copy_gen {
             for i in 0..x_len {
                 let y_temp = y[i].clone();
                 let x_temp = x[i].clone();
-                x[i] = <$code as ConstantTime>::ct_select(flag,y_temp,x_temp);
+                x[i] = <C as super::ConstantTime>::ct_select(flag,y_temp,x_temp);
             }
         }
         #[test]
-        fn $test_name() {
-            const MAX: $code = max!($code);
-            let base: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let mut x: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let y: [$code;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
-            ct_copy(false,&mut x, &y);
-            assert_eq!( $sl_eq(&x,&base), true);
-            ct_copy(true,&mut x, &y);
-            assert_eq!( $sl_eq(&x,&base), false);
-            assert_eq!( $sl_eq(&x,&y), true);
+        fn test_ct_copy() {
+            let base: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let mut x: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let y: [C;10] = [MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX,MAX];
+            $ct_copy(false,&mut x, &y);
+            assert_eq!( <C as super::ConstantTime>::ct_eq_slice(&x,&base), true);
+            $ct_copy(true,&mut x, &y);
+            assert_eq!( <C as super::ConstantTime>::ct_eq_slice(&x,&base), false);
+            assert_eq!( <C as super::ConstantTime>::ct_eq_slice(&x,&y), true);
         }
         #[test]
         #[should_panic]
-        fn $other_test() {
-            let base: [$code;10] = [0,0,0,0,0,0,0,0,0,0];
-            let mut x: [$code;9] = [0,0,0,0,0,0,0,0,0];
+        fn test_ct_copy_panic() {
+            let base: [C;10] = [0,0,0,0,0,0,0,0,0,0];
+            let mut x: [C;9] = [0,0,0,0,0,0,0,0,0];
             //trigger panic
             //even on false evaluation
             //value of flag is irrelevant
-            $name(false,&mut x,&base);
+            $ct_copy(false,&mut x,&base);
         }
     }
 }
-ct_constant_copy_gen!(ct_copy_u8,u8;;
-    test_ct_copy_u8,ct_u8_slice_eq,test_ct_copy_u8_panic);
-ct_constant_copy_gen!(ct_copy_u16,u16;;
-    test_ct_copy_u16,ct_u16_slice_eq,test_ct_copy_u16_panic);
-ct_constant_copy_gen!(ct_copy_u32,u32;;
-    test_ct_copy_u32,ct_u32_slice_eq,test_ct_copy_u32_panic);
-ct_constant_copy_gen!(ct_copy_u64,u64;;
-    test_ct_copy_u64,ct_u64_slice_eq,test_ct_copy_u64_panic);
-ct_constant_copy_gen!(ct_copy_usize,usize;;
-    test_ct_copy_usize,ct_usize_slice_eq,test_ct_copy_usize_panic);
+
+
+macro_rules! ct_mod_gen {
+    ($code: ident) => {
+        type C = $code;
+        const MAX: $code = ::core::$code::MAX;
+    }
+}
+
+pub mod u8 {
+    ct_mod_gen!(u8);
+    // ct_eq_gen!(ct_u8_eq; ..);
+    ct_eq_slice_gen!(ct_u8_slice_eq);
+    // ct_select_gen!(ct_select_u8; 155,4);
+    ct_constant_copy_gen!(ct_copy_u8);
+}
+
+pub mod u16 {
+    ct_mod_gen!(u16);
+    // ct_eq_gen!(ct_u16_eq; ..);
+    ct_eq_slice_gen!(ct_u16_slice_eq);
+    // ct_select_gen!(ct_select_u16; 155,4);
+    ct_constant_copy_gen!(ct_copy_u16);
+}
+
+pub mod u32 {
+    ct_mod_gen!(u32);
+    // ct_eq_gen!(ct_u32_eq; ..);
+    ct_eq_slice_gen!(ct_u32_slice_eq);
+    // ct_select_gen!(ct_select_u32; 155,4);
+    ct_constant_copy_gen!(ct_copy_u32);
+}
+
+pub mod u64 {
+    ct_mod_gen!(u64);
+    // ct_eq_gen!(ct_u64_eq; ..);
+    ct_eq_slice_gen!(ct_u64_slice_eq);
+    // ct_select_gen!(ct_select_u64; 155,4);
+    ct_constant_copy_gen!(ct_copy_u64);
+}
+
+pub mod usize {
+    ct_mod_gen!(usize);
+    // ct_eq_gen!(ct_usize_eq; ..);
+    ct_eq_slice_gen!(ct_usize_slice_eq);
+    // ct_select_gen!(ct_select_usize; 155,4);
+    ct_constant_copy_gen!(ct_copy_usize);
+}
+
+
+
