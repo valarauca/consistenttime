@@ -251,6 +251,7 @@ macro_rules! ct_eq_slice_gen {
             if x_len != y_len {
                return false;
             }
+            let y = &y[..x_len];
             let mut flag: C = 0;
             for i in 0..x_len {
                 flag |= x[i] ^ y[i];
@@ -350,6 +351,7 @@ macro_rules! ct_constant_copy_gen {
             if x_len != y_len {
                 panic!("Consistent Time: Attempted to copy between non-equal lens");
             }
+            let y = &y[..x_len];    // elide bounds checks; see Rust commit 6a7bc47
             for i in 0..x_len {
                 let y_temp = y[i].clone();
                 let x_temp = x[i].clone();
